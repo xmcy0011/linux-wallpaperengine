@@ -6,12 +6,8 @@
 #include "WallpaperEngine/Render/Drivers/Output/X11Output.h"
 #endif
 
-#define GLFW_EXPOSE_NATIVE_X11
-#include "WallpaperEngine/Debugging/CallStack.h"
-
-#include <GLFW/glfw3native.h>
-
-#include <unistd.h>
+#include <chrono>
+#include <thread>
 
 using namespace WallpaperEngine::Render::Drivers;
 
@@ -32,9 +28,10 @@ GLFWOpenGLDriver::GLFWOpenGLDriver (const char* windowTitle, ApplicationContext&
     glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint (GLFW_VISIBLE, GLFW_FALSE);
-    // set X11-specific hints
+#ifdef ENABLE_X11
     glfwWindowHintString (GLFW_X11_CLASS_NAME, "linux-wallpaperengine");
     glfwWindowHintString (GLFW_X11_INSTANCE_NAME, "linux-wallpaperengine");
+#endif
 
     // for forced window mode, we can set some hints that'll help position the window
     if (context.settings.render.mode == Application::ApplicationContext::EXPLICIT_WINDOW) {
@@ -156,7 +153,10 @@ void GLFWOpenGLDriver::dispatchEventQueue () {
 
     // ensure the frame time is correct to not overrun FPS
     if ((endTime - startTime) < minimumTime) {
-	usleep ((minimumTime - (endTime - startTime)) * CLOCKS_PER_SEC);
+        const float sleepSec = minimumTime - (endTime - startTime);
+        if (sleepSec > 0.f) {
+            std::this_thread::sleep_for (std::chrono::duration<float> (sleepSec));
+        }
     }
 }
 
@@ -166,7 +166,7 @@ void* GLFWOpenGLDriver::getProcAddress (const char* name) const {
 
 GLFWwindow* GLFWOpenGLDriver::getWindow () const { return this->m_window; }
 
-__attribute__ ((constructor)) void registerGLFWOpenGLDriver () {
+static void registerGLFWOpenGLDriver () {
     sVideoFactories.registerDriver (
 	ApplicationContext::DESKTOP_BACKGROUND, "x11",
 	[] (ApplicationContext& context, WallpaperApplication& application) -> std::unique_ptr<VideoDriver> {
@@ -186,3 +186,14 @@ __attribute__ ((constructor)) void registerGLFWOpenGLDriver () {
 	}
     );
 }
+
+#if defined(_MSC_VER)
+namespace {
+struct GLFWOpenGLDriverRegistrar {
+    GLFWOpenGLDriverRegistrar () { registerGLFWOpenGLDriver (); }
+};
+static GLFWOpenGLDriverRegistrar s_glfwOpenGLDriverRegistrar;
+} // namespace
+#else
+__attribute__ ((constructor)) static void registerGLFWOpenGLDriverCtor () { registerGLFWOpenGLDriver (); }
+#endif

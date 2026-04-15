@@ -8,9 +8,13 @@ endif()
 
 set_property(GLOBAL PROPERTY OS_FOLDERS ON)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 set(OpenGL_GL_PREFERENCE "LEGACY")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+option(ENABLE_MPV "Link libmpv for video wallpapers and video textures (disable for scene-only builds)" ON)
 
 # puts the app in demomode, which records a 5 second webm video and quits
 if(NOT DEMOMODE)
@@ -22,116 +26,92 @@ if(NOT ERRORONLY)
     set(ERRORONLY 0)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-narrowing")
-
 find_package(X11)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
 find_package(GLUT REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(SDL2 REQUIRED)
-find_package(MPV REQUIRED)
+find_package(SDL2 CONFIG QUIET)
+if(NOT SDL2_FOUND)
+    find_package(SDL2 MODULE REQUIRED)
+endif()
+if(SDL2_FOUND AND NOT SDL2_LIBRARIES)
+    if(TARGET SDL2::SDL2)
+        set(SDL2_LIBRARIES SDL2::SDL2)
+    elseif(TARGET SDL2::SDL2-static)
+        set(SDL2_LIBRARIES SDL2::SDL2-static)
+    endif()
+endif()
+if(SDL2_FOUND AND NOT SDL2_INCLUDE_DIRS)
+    if(TARGET SDL2::SDL2)
+        get_target_property(SDL2_INCLUDE_DIRS SDL2::SDL2 INTERFACE_INCLUDE_DIRECTORIES)
+    elseif(TARGET SDL2::SDL2-static)
+        get_target_property(SDL2_INCLUDE_DIRS SDL2::SDL2-static INTERFACE_INCLUDE_DIRECTORIES)
+    endif()
+endif()
+if(ENABLE_MPV)
+    find_package(MPV REQUIRED)
+else()
+    message(STATUS "ENABLE_MPV is OFF: video wallpapers and video textures are disabled")
+    set(MPV_INCLUDE_DIR "")
+    set(MPV_LIBRARY "")
+endif()
 find_package(LZ4 REQUIRED)
 find_package(FFMPEG REQUIRED)
-find_package(PulseAudio REQUIRED)
+
+# GLM (header-only): WallpaperEngine + vendored SPIRV-Cross include <glm/...>. Linux often has
+# system headers; MSVC + vcpkg needs the glm port and include path before External subdirs build.
+find_package(glm CONFIG QUIET)
+set(GLM_GLOBAL_INCLUDE "")
+if(glm_FOUND AND TARGET glm::glm-header-only)
+    get_target_property(GLM_GLOBAL_INCLUDE glm::glm-header-only INTERFACE_INCLUDE_DIRECTORIES)
+elseif(glm_FOUND AND TARGET glm::glm)
+    get_target_property(GLM_GLOBAL_INCLUDE glm::glm INTERFACE_INCLUDE_DIRECTORIES)
+endif()
+if(NOT GLM_GLOBAL_INCLUDE OR GLM_GLOBAL_INCLUDE STREQUAL "GLM_GLOBAL_INCLUDE-NOTFOUND")
+    find_path(GLM_INCLUDE_DIR NAMES glm/glm.hpp REQUIRED
+        DOC "Directory containing glm/glm.hpp (e.g. install libglm-dev or vcpkg glm)")
+    set(GLM_GLOBAL_INCLUDE "${GLM_INCLUDE_DIR}")
+    if(NOT TARGET glm::glm-header-only)
+        add_library(glm::glm-header-only INTERFACE IMPORTED GLOBAL)
+        target_include_directories(glm::glm-header-only INTERFACE "${GLM_INCLUDE_DIR}")
+    endif()
+endif()
+include_directories(BEFORE "${GLM_GLOBAL_INCLUDE}")
+
+if(TARGET glm::glm-header-only)
+    set(GLM_LINK_TARGET glm::glm-header-only)
+elseif(TARGET glm::glm)
+    set(GLM_LINK_TARGET glm::glm)
+else()
+    set(GLM_LINK_TARGET glm::glm-header-only)
+endif()
+
+if(WIN32)
+    option(ENABLE_PULSEAUDIO "PulseAudio integration (Linux desktop audio capture / auto-mute)" OFF)
+else()
+    option(ENABLE_PULSEAUDIO "PulseAudio integration (Linux desktop audio capture / auto-mute)" ON)
+endif()
+if(ENABLE_PULSEAUDIO)
+    find_package(PulseAudio REQUIRED)
+else()
+    message(STATUS "ENABLE_PULSEAUDIO is OFF: PulseAudio recorder/detector disabled (no libpulse)")
+    set(PULSEAUDIO_INCLUDE_DIR "")
+    set(PULSEAUDIO_LIBRARY "")
+endif()
 
 set(ENABLE_OPT OFF)
 set(SPIRV_CROSS_FORCE_PIC ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(KISSFFT_TEST OFF)
-set(KISSFFT_TOOLS OFF)
-
-# Download CEF of specified version for current platform
-# Specify the CEF distribution version.
-set(CEF_VERSION "135.0.17+gcbc1c5b+chromium-135.0.7049.52")
-# CEF_DISTRIBUTION_TYPE default value should be different based on the type of build
-# debug builds should use standard versions
-# while release version can do with the minimal version
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(default_cef_dist "standard")
-else()
-    set(default_cef_dist "minimal")
-endif()
-
-set(CEF_DISTRIBUTION_TYPE "${default_cef_dist}" CACHE STRING "CEF distribution variant")
-set_property(CACHE CEF_DISTRIBUTION_TYPE PROPERTY STRINGS "minimal" "standard")
-# Determine the platform.
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-    if("${PROJECT_ARCH}" STREQUAL "arm64")
-        set(CEF_PLATFORM "macosarm64")
-        set(CEF_ARCH_DETECTION "${PROJECT_ARCH}")
-    elseif("${PROJECT_ARCH}" STREQUAL "x86_64")
-        set(CEF_PLATFORM "macosx64")
-        set(CEF_ARCH_DETECTION "${PROJECT_ARCH}")
-    elseif("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64")
-        set(PROJECT_ARCH "arm64")
-        set(CEF_PLATFORM "macosarm64")
-        set(CEF_ARCH_DETECTION "${CMAKE_HOST_SYSTEM_PROCESSOR}")
-    else()
-        set(PROJECT_ARCH "x86_64")
-        set(CEF_PLATFORM "macosx64")
-        set(CEF_ARCH_DETECTION "Default for Darwin")
-    endif()
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-    if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm")
-        set(CEF_PLATFORM "linuxarm")
-        set(CEF_ARCH_DETECTION "${CMAKE_SYSTEM_PROCESSOR}")
-    elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64")
-        set(PROJECT_ARCH "arm64")
-        set(CEF_PLATFORM "linuxarm64")
-        set(CEF_ARCH_DETECTION "${CMAKE_SYSTEM_PROCESSOR}")
-    elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
-        set(PROJECT_ARCH "arm64")
-        set(CEF_PLATFORM "linuxarm64")
-        set(CEF_ARCH_DETECTION "${CMAKE_SYSTEM_PROCESSOR}")
-    elseif(CMAKE_SIZEOF_VOID_P MATCHES 8)
-        set(CEF_PLATFORM "linux64")
-        set(CEF_ARCH_DETECTION "Based on void size ${CMAKE_SIZEOF_VOID_P} (${CMAKE_SYSTEM_PROCESSOR})")
-    else()
-        message(FATAL_ERROR "Linux x86 32-bit builds are discontinued.")
-    endif()
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
-    if("${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "ARM64")
-        set(CEF_PLATFORM "windowsarm64")
-        set(CEF_ARCH_DETECTION "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}")
-    elseif(CMAKE_SIZEOF_VOID_P MATCHES 8)
-        set(CEF_PLATFORM "windows64")
-        set(CEF_ARCH_DETECTION "Based on void size ${CMAKE_SIZEOF_VOID_P}")
-    else()
-        set(CEF_PLATFORM "windows32")
-        set(CEF_ARCH_DETECTION "Default for Windows")
-    endif()
-endif()
-
-if(CEF_DISTRIBUTION_TYPE AND NOT CEF_DISTRIBUTION_TYPE STREQUAL "standard")
-    set(CEF_PLATFORM "${CEF_PLATFORM}_${CEF_DISTRIBUTION_TYPE}")
-endif()
-message(STATUS "Using CEF for ${CMAKE_SYSTEM_NAME} - ${CEF_PLATFORM} (${CEF_ARCH_DETECTION})")
-include(DownloadCEF)
-DownloadCEF("${CEF_PLATFORM}" "${CEF_VERSION}" "${CMAKE_CURRENT_BINARY_DIR}/cef")
-
-# add cef's cmake files to the lookup so we can use those directly
-list(APPEND CMAKE_MODULE_PATH "${CEF_ROOT}/cmake")
-
-find_package(CEF REQUIRED)
-
-# remove some switches that forbid us from using things that are commonplace in our codebase
-list(REMOVE_ITEM CEF_CXX_COMPILER_FLAGS -fno-exceptions)
-list(REMOVE_ITEM CEF_CXX_COMPILER_FLAGS -fno-rtti)
-list(REMOVE_ITEM CEF_CXX_COMPILER_FLAGS -std=c++17)
-list(REMOVE_ITEM CEF_COMPILER_FLAGS -fvisibility=hidden)
-list(REMOVE_ITEM CEF_COMPILER_FLAGS -fvisibility-inlines-hidden)
-list(APPEND CEF_CXX_COMPILER_FLAGS -std=c++20)
-list(APPEND CEF_EXE_LINKER_FLAGS -rdynamic)
-# remove the vulkan library from the files to copy so it doesn't fail after removing it
-list(REMOVE_ITEM CEF_BINARY_FILES libvulkan.so.1)
+# kissfft uses option() with default ON; a stale cache can re-enable tools and require libpng (pkg-config).
+set(KISSFFT_TEST OFF CACHE BOOL "Build kissfft tests (unused by this project)" FORCE)
+set(KISSFFT_TOOLS OFF CACHE BOOL "Build kissfft CLI tools (unused by this project)" FORCE)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(TARGET_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output)
 
-add_subdirectory(${CEF_LIBCEF_DLL_WRAPPER_PATH} libcef_dll_wrapper)
 add_subdirectory(src/External/glslang-WallpaperEngine glslang)
 add_subdirectory(src/External/SPIRV-Cross-WallpaperEngine spirv-cross)
 add_subdirectory(src/External/kissfft kissfft)
@@ -238,13 +218,6 @@ if(NOT WAYLAND_SUPPORT_FOUND AND NOT X11_SUPPORT_FOUND)
     message(WARNING "No window server detected at build time. You will only be able to preview backgrounds")
 endif()
 
-add_library(ceflib SHARED IMPORTED)
-set_target_properties(ceflib
-        PROPERTIES IMPORTED_LOCATION ${TARGET_OUTPUT_DIRECTORY}/libcef.so)
-
-ADD_LOGICAL_TARGET(libcef_lib "${CEF_LIB_DEBUG}" "${CEF_LIB_RELEASE}")
-PRINT_CEF_CONFIG()
-
 include_directories(
     src
     src/External/glslang-WallpaperEngine
@@ -259,7 +232,6 @@ include_directories(
     ${SDL2_INCLUDE_DIRS}
     ${FFMPEG_INCLUDE_DIR}
     ${PULSEAUDIO_INCLUDE_DIR}
-    ${CEF_INCLUDE_PATH}
     ${CMAKE_SOURCE_DIR}
     ${X11_INCLUDES})
 
@@ -380,8 +352,6 @@ set(COMMON_SOURCES
     src/WallpaperEngine/Render/Wallpapers/CScene.cpp
     src/WallpaperEngine/Render/Wallpapers/CVideo.h
     src/WallpaperEngine/Render/Wallpapers/CVideo.cpp
-    src/WallpaperEngine/Render/Wallpapers/CWeb.h
-    src/WallpaperEngine/Render/Wallpapers/CWeb.cpp
     src/WallpaperEngine/Render/Camera.h
     src/WallpaperEngine/Render/Camera.cpp
     src/WallpaperEngine/Render/CObject.h
@@ -403,21 +373,6 @@ set(COMMON_SOURCES
     src/WallpaperEngine/Render/CFBO.cpp
     src/WallpaperEngine/Render/Objects/Effects/CPass.h
     src/WallpaperEngine/Render/Objects/Effects/CPass.cpp
-
-    src/WallpaperEngine/WebBrowser/CEF/RenderHandler.cpp
-    src/WallpaperEngine/WebBrowser/CEF/RenderHandler.h
-    src/WallpaperEngine/WebBrowser/CEF/BrowserClient.cpp
-    src/WallpaperEngine/WebBrowser/CEF/BrowserClient.h
-    src/WallpaperEngine/WebBrowser/CEF/BrowserApp.cpp
-    src/WallpaperEngine/WebBrowser/CEF/BrowserApp.h
-    src/WallpaperEngine/WebBrowser/CEF/SubprocessApp.cpp
-    src/WallpaperEngine/WebBrowser/CEF/SubprocessApp.h
-    src/WallpaperEngine/WebBrowser/CEF/WPSchemeHandlerFactory.cpp
-    src/WallpaperEngine/WebBrowser/CEF/WPSchemeHandlerFactory.h
-    src/WallpaperEngine/WebBrowser/CEF/WPSchemeHandler.cpp
-    src/WallpaperEngine/WebBrowser/CEF/WPSchemeHandler.h
-    src/WallpaperEngine/WebBrowser/WebBrowserContext.cpp
-    src/WallpaperEngine/WebBrowser/WebBrowserContext.h
 
     src/WallpaperEngine/Data/Assets/Types.h
     src/WallpaperEngine/Data/Assets/Texture.h
@@ -476,6 +431,24 @@ set(COMMON_SOURCES
     src/WallpaperEngine/Data/Model/ScriptedDynamicValue.h
     src/WallpaperEngine/Data/Model/ScriptedDynamicValue.cpp)
 
+if(NOT ENABLE_MPV)
+    list(REMOVE_ITEM COMMON_SOURCES
+        src/WallpaperEngine/Render/Wallpapers/CVideo.h
+        src/WallpaperEngine/Render/Wallpapers/CVideo.cpp
+        src/WallpaperEngine/VideoPlayback/MPV/GLPlayer.cpp
+        src/WallpaperEngine/VideoPlayback/MPV/GLPlayer.h
+        src/WallpaperEngine/VideoPlayback/MPV/MemoryStreamProtocol.cpp
+        src/WallpaperEngine/VideoPlayback/MPV/MemoryStreamProtocol.h)
+endif()
+
+if(NOT ENABLE_PULSEAUDIO)
+    list(REMOVE_ITEM COMMON_SOURCES
+        src/WallpaperEngine/Audio/Drivers/Recorders/PulseAudioPlaybackRecorder.cpp
+        src/WallpaperEngine/Audio/Drivers/Recorders/PulseAudioPlaybackRecorder.h
+        src/WallpaperEngine/Audio/Drivers/Detectors/PulseAudioPlayingDetector.cpp
+        src/WallpaperEngine/Audio/Drivers/Detectors/PulseAudioPlayingDetector.h)
+endif()
+
 if(BUILD_TESTING)
     add_executable(
         tests
@@ -501,6 +474,7 @@ add_library(
     ${DEMOMODE_SOURCES})
 
 target_link_libraries (linux-wallpaperengine-lib PUBLIC
+    ${GLM_LINK_TARGET}
     ${OPENGL_LIBRARIES}
     GLEW::GLEW
     ${GLUT_LIBRARIES}
@@ -508,8 +482,6 @@ target_link_libraries (linux-wallpaperengine-lib PUBLIC
     ${LZ4_LIBRARY}
     ${SDL2_LIBRARIES}
     ${FFMPEG_LIBRARIES}
-    ${MPV_LIBRARY}
-    ${PULSEAUDIO_LIBRARY}
     ${WAYLAND_LIBRARIES}
     ${X11_LIBRARIES}
     kissfft
@@ -517,14 +489,29 @@ target_link_libraries (linux-wallpaperengine-lib PUBLIC
     spirv-cross-core
     spirv-cross-glsl
     glfw
-    libcef_lib
-    libcef_dll_wrapper
     argparse
     qjs)
+if(WIN32)
+    target_link_libraries(linux-wallpaperengine-lib PUBLIC Dbghelp)
+endif()
+
+if(ENABLE_MPV)
+    target_link_libraries(linux-wallpaperengine-lib PUBLIC ${MPV_LIBRARY})
+endif()
+if(ENABLE_PULSEAUDIO)
+    target_link_libraries(linux-wallpaperengine-lib PUBLIC ${PULSEAUDIO_LIBRARY})
+endif()
+
+target_compile_features(linux-wallpaperengine-lib PUBLIC cxx_std_20)
+if(MSVC)
+    # C1041: parallel cl.exe (/MP) shares one vc*.pdb; /FS forces synchronized PDB writes.
+    target_compile_options(linux-wallpaperengine-lib PRIVATE /FS)
+endif()
 
 if (BUILD_TESTING)
     target_link_libraries (tests PRIVATE
         Catch2::Catch2WithMain
+        ${GLM_LINK_TARGET}
         ${OPENGL_LIBRARIES}
         GLEW::GLEW
         ${GLUT_LIBRARIES}
@@ -532,8 +519,6 @@ if (BUILD_TESTING)
         ${LZ4_LIBRARY}
         ${SDL2_LIBRARIES}
         ${FFMPEG_LIBRARIES}
-        ${MPV_LIBRARY}
-        ${PULSEAUDIO_LIBRARY}
         ${WAYLAND_LIBRARIES}
         ${X11_LIBRARIES}
         kissfft
@@ -541,10 +526,32 @@ if (BUILD_TESTING)
         spirv-cross-core
         spirv-cross-glsl
         glfw
-        libcef_lib
-        libcef_dll_wrapper
         argparse
         qjs)
+    if(WIN32)
+        target_link_libraries(tests PRIVATE Dbghelp)
+    endif()
+    if(ENABLE_MPV)
+        target_link_libraries(tests PRIVATE ${MPV_LIBRARY})
+    endif()
+    if(ENABLE_PULSEAUDIO)
+        target_link_libraries(tests PRIVATE ${PULSEAUDIO_LIBRARY})
+    endif()
+    target_compile_features(tests PRIVATE cxx_std_20)
+    if(MSVC)
+        target_compile_options(tests PRIVATE /FS)
+    endif()
+endif()
+
+if(ENABLE_MPV)
+    target_compile_definitions(linux-wallpaperengine-lib PUBLIC WALLPAPERENGINE_ENABLE_MPV=1)
+else()
+    target_compile_definitions(linux-wallpaperengine-lib PUBLIC WALLPAPERENGINE_ENABLE_MPV=0)
+endif()
+if(ENABLE_PULSEAUDIO)
+    target_compile_definitions(linux-wallpaperengine-lib PUBLIC WALLPAPERENGINE_ENABLE_PULSEAUDIO=1)
+else()
+    target_compile_definitions(linux-wallpaperengine-lib PUBLIC WALLPAPERENGINE_ENABLE_PULSEAUDIO=0)
 endif()
 
 target_compile_definitions(linux-wallpaperengine-lib PUBLIC ERRORONLY=${ERRORONLY})
@@ -554,6 +561,16 @@ if (BUILD_TESTING)
     # tests should give as much output as possible
     target_compile_definitions(tests PRIVATE ERRORONLY=0)
     target_compile_definitions(tests PRIVATE DEMOMODE=0)
+    if(ENABLE_MPV)
+        target_compile_definitions(tests PRIVATE WALLPAPERENGINE_ENABLE_MPV=1)
+    else()
+        target_compile_definitions(tests PRIVATE WALLPAPERENGINE_ENABLE_MPV=0)
+    endif()
+    if(ENABLE_PULSEAUDIO)
+        target_compile_definitions(tests PRIVATE WALLPAPERENGINE_ENABLE_PULSEAUDIO=1)
+    else()
+        target_compile_definitions(tests PRIVATE WALLPAPERENGINE_ENABLE_PULSEAUDIO=0)
+    endif()
 endif()
 
 if(X11_SUPPORT_FOUND)
@@ -589,25 +606,23 @@ target_include_directories(linux-wallpaperengine-lib PUBLIC
     ${SDL2_INCLUDE_DIRS}
     ${FFMPEG_INCLUDE_DIR}
     ${PULSEAUDIO_INCLUDE_DIR}
-    ${CEF_INCLUDE_PATH}
     ${CMAKE_SOURCE_DIR}
     ${X11_INCLUDES}
     ${WAYLAND_OUTPUT_DIR})
 
-COPY_FILES(linux-wallpaperengine-lib "${CEF_BINARY_FILES}" "${CEF_BINARY_DIR}" "${TARGET_OUTPUT_DIRECTORY}")
-COPY_FILES(linux-wallpaperengine-lib "${CEF_RESOURCE_FILES}" "${CEF_RESOURCE_DIR}" "${TARGET_OUTPUT_DIRECTORY}")
-# remove the vulkan lib as chromium includes a broken libvulkan.so.1 with it
-file(REMOVE "${CEF_BINARY_DIR}/libvulkan.so.1")
 set_target_properties(linux-wallpaperengine-lib PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${TARGET_OUTPUT_DIRECTORY})
 
-add_dependencies(linux-wallpaperengine-lib libcef_dll_wrapper glslang spirv-cross-core spirv-cross-glsl)
-# custom version of cef's SET_EXECUTABLE_TARGET_PROPERTIES that fixes C files being compiled with the wrong parameters
-REPLACED_SET_EXECUTABLE_TARGET_PROPERTIES(linux-wallpaperengine-lib)
+add_dependencies(linux-wallpaperengine-lib glslang spirv-cross-core spirv-cross-glsl)
 
 add_executable(linux-wallpaperengine
     src/main.cpp)
 
+if(MSVC)
+    target_compile_options(linux-wallpaperengine PRIVATE /FS)
+endif()
+
+target_compile_features(linux-wallpaperengine PRIVATE cxx_std_20)
 target_link_libraries (linux-wallpaperengine PUBLIC linux-wallpaperengine-lib)
 
 # set some install parameters if not in debug mode

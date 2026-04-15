@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <iosfwd>
 #include <memory>
+#include <string>
 
 namespace WallpaperEngine::Data::Utils {
 using ReadStream = std::istream;

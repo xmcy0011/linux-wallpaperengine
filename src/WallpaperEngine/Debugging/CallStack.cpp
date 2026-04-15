@@ -40,13 +40,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CallStack.h"
 #include <cassert>
 #include <cstdio>
-#include <cstdlib>
 #include <string>
 #include <vector>
 
 #if defined(_WIN32)
-#include <imagehlp.h>
+// imagehlp.h before windows.h breaks SDK headers (e.g. wincrypt.h). Include Windows first.
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
+#include <dbghelp.h>
+#ifdef _MSC_VER
+#pragma comment(lib, "Dbghelp.lib")
+#endif
 #if defined(__MINGW32__)
 #define PACKAGE 1 // Supress cmake error.
 #define PACKAGE_VERSION 1 // Supress cmake error.
@@ -89,19 +98,19 @@ string CallStack::Demangle (const char* name) {
 class noncopyable // Like the one in boost.
 {
 protected:
-    noncopyable (void) { /* Nothing to do */ }
+    noncopyable () = default;
 
-private:
-    noncopyable (const noncopyable&);
-    noncopyable& operator= (const noncopyable&);
-};
-// A global thread mutex class.
-class mutex : noncopyable {
 public:
-    mutex (void) { InitializeCriticalSection (&cs); }
-    ~mutex (void) { DeleteCriticalSection (&cs); }
-    void lock (void) { EnterCriticalSection (&cs); }
-    void unlock (void) { LeaveCriticalSection (&cs); }
+    noncopyable (const noncopyable&) = delete;
+    noncopyable& operator= (const noncopyable&) = delete;
+};
+// Serialize Sym* calls (name avoids clashing with std::mutex from standard headers).
+class CallStackSymLock : noncopyable {
+public:
+    CallStackSymLock () : cs() { InitializeCriticalSection (&cs); }
+    ~CallStackSymLock () { DeleteCriticalSection (&cs); }
+    void lock () { EnterCriticalSection (&cs); }
+    void unlock () { LeaveCriticalSection (&cs); }
 
 private:
     CRITICAL_SECTION cs;

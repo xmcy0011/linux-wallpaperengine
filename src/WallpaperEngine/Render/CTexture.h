@@ -3,20 +3,22 @@
 #include "Helpers/ContextAware.h"
 #include "TextureProvider.h"
 #include "WallpaperEngine/Data/Assets/Texture.h"
-#include "WallpaperEngine/VideoPlayback/MPV/GLPlayer.h"
 
 #include <GL/glew.h>
 #include <glm/vec4.hpp>
 #include <memory>
-#include <mpv/client.h>
-#include <mpv/render.h>
-#include <mpv/render_gl.h>
 #include <vector>
+
+#if WALLPAPERENGINE_ENABLE_MPV
+#include "WallpaperEngine/VideoPlayback/MPV/GLPlayer.h"
+#endif
 
 namespace WallpaperEngine::Render {
 class RenderContext;
 using namespace WallpaperEngine::Data::Assets;
+#if WALLPAPERENGINE_ENABLE_MPV
 using namespace WallpaperEngine::VideoPlayback::MPV;
+#endif
 /**
  * A normal texture file in WallpaperEngine's format
  */
@@ -84,7 +86,9 @@ private:
     GLuint* m_textureID = nullptr;
     /** Resolution vector of the texture */
     glm::vec4 m_resolution {};
+#if WALLPAPERENGINE_ENABLE_MPV
     /** The video player in use */
     GLPlayerUniquePtr m_player;
+#endif
 };
 } // namespace WallpaperEngine::Assets

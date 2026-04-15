@@ -76,34 +76,6 @@ TEST_CASE ("OpenGL to normalized coordinate conversion") {
 }
 
 /**
- * Test OpenGL to CEF coordinate conversion
- * OpenGL: Y=0 at bottom, Y=height at top
- * CEF: Y=0 at top, Y=height at bottom
- */
-TEST_CASE ("OpenGL to CEF coordinate conversion") {
-    const int viewportHeight = 1080;
-    const int viewportY = 0;
-
-    // Mouse at top in OpenGL (Y=height)
-    double openglY = 1080.0;
-    int clampedY = std::clamp (static_cast<int> (openglY - viewportY), 0, viewportHeight);
-    int cefY = viewportHeight - clampedY;
-    CHECK (cefY == 0); // Should be 0 (top in CEF)
-
-    // Mouse at bottom in OpenGL (Y=0)
-    openglY = 0.0;
-    clampedY = std::clamp (static_cast<int> (openglY - viewportY), 0, viewportHeight);
-    cefY = viewportHeight - clampedY;
-    CHECK (cefY == 1080); // Should be height (bottom in CEF)
-
-    // Mouse at middle
-    openglY = 540.0;
-    clampedY = std::clamp (static_cast<int> (openglY - viewportY), 0, viewportHeight);
-    cefY = viewportHeight - clampedY;
-    CHECK (cefY == 540); // Should be middle
-}
-
-/**
  * Test complete coordinate flow: GLFW → OpenGL → Normalized
  * Verifies the full pipeline works correctly
  */

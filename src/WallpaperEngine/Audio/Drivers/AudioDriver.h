@@ -20,10 +20,6 @@ namespace Audio {
 	    class AudioPlayingDetector;
 	}
 
-	namespace Recorders {
-	    class PulseAudioPlaybackRecorder;
-	}
-
 	/**
 	 * Base class for audio driver implementations
 	 */

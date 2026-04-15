@@ -18,10 +18,6 @@ namespace WallpaperEngine::Application {
 class WallpaperApplication;
 }
 
-namespace WallpaperEngine::WebBrowser {
-class WebBrowserContext;
-}
-
 namespace WallpaperEngine::Render {
 namespace Helpers {
     class ContextAware;
@@ -136,8 +132,7 @@ public:
      */
     static std::unique_ptr<CWallpaper> fromWallpaper (
 	const Wallpaper& wallpaper, RenderContext& context, AudioContext& audioContext,
-	WebBrowser::WebBrowserContext* browserContext, const WallpaperState::TextureUVsScaling& scalingMode,
-	const uint32_t& clampMode
+	const WallpaperState::TextureUVsScaling& scalingMode, const uint32_t& clampMode
     );
 
 protected:

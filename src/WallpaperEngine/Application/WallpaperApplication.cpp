@@ -1,9 +1,12 @@
 #include "WallpaperApplication.h"
 
-#include "Steam/FileSystem/FileSystem.h"
 #include "WallpaperEngine/Application/ApplicationState.h"
-#include "WallpaperEngine/Assets/AssetLoadException.h"
+#include "WallpaperEngine/Audio/Drivers/Detectors/AudioPlayingDetector.h"
+#include "WallpaperEngine/Audio/Drivers/Recorders/PlaybackRecorder.h"
+#if WALLPAPERENGINE_ENABLE_PULSEAUDIO
 #include "WallpaperEngine/Audio/Drivers/Detectors/PulseAudioPlayingDetector.h"
+#include "WallpaperEngine/Audio/Drivers/Recorders/PulseAudioPlaybackRecorder.h"
+#endif
 #include "WallpaperEngine/FileSystem/Container.h"
 #include "WallpaperEngine/Logging/Log.h"
 #include "WallpaperEngine/Render/Drivers/VideoFactories.h"
@@ -13,7 +16,6 @@
 #include "WallpaperEngine/Data/Parsers/ProjectParser.h"
 
 #include "WallpaperEngine/Data/Model/Property.h"
-#include "WallpaperEngine/Data/Model/Wallpaper.h"
 #include "WallpaperEngine/Debugging/CallStack.h"
 
 #if DEMOMODE
@@ -22,10 +24,10 @@
 
 #include <algorithm>
 #include <numeric>
-#include <unistd.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 #include <thread>
+#include <SDL2/SDL.h>
 
 #define FULLSCREEN_CHECK_WAIT_TIME 250
 
@@ -38,7 +40,7 @@ using namespace WallpaperEngine::Application;
 using namespace WallpaperEngine::Data::Model;
 using namespace WallpaperEngine::FileSystem;
 
-void CustomGLDebugCallback (
+void GLAPIENTRY CustomGLDebugCallback (
     GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam
 ) {
     if (severity != GL_DEBUG_SEVERITY_HIGH) {
@@ -62,7 +64,6 @@ void CustomGLDebugCallback (
 WallpaperApplication::WallpaperApplication (ApplicationContext& context) : m_context (context) {
     this->loadBackgrounds ();
     this->setupProperties ();
-    this->setupBrowser ();
     this->initializePlaylists ();
 }
 
@@ -177,16 +178,16 @@ void WallpaperApplication::loadBackgrounds () {
 	    path = this->m_context.settings.general.defaultPlaylist->items.front ();
 	}
 
-	this->m_backgrounds["default"] = this->loadBackground (path);
+	this->m_backgrounds["default"] = this->loadBackground (path.string());
 	return;
     }
 
     for (const auto& [screen, path] : this->m_context.settings.general.screenBackgrounds) {
 	// screens with no screen should use the default
 	if (path.empty ()) {
-	    this->m_backgrounds[screen] = this->loadBackground (this->m_context.settings.general.defaultBackground);
+	    this->m_backgrounds[screen] = this->loadBackground (this->m_context.settings.general.defaultBackground.string());
 	} else {
-	    this->m_backgrounds[screen] = this->loadBackground (path);
+	    this->m_backgrounds[screen] = this->loadBackground (path.string());
 	}
     }
 }
@@ -287,16 +288,6 @@ void WallpaperApplication::initializePlaylists () {
     }
 }
 
-void WallpaperApplication::ensureBrowserForProject (const Project& project) {
-    if (!project.wallpaper->is<Web> ()) {
-	return;
-    }
-
-    if (!this->m_browserContext) {
-	this->m_browserContext = std::make_unique<WebBrowser::WebBrowserContext> (*this);
-    }
-}
-
 bool WallpaperApplication::makeAnyViewportCurrent () const {
     if (!this->m_renderContext) {
 	return false;
@@ -339,7 +330,8 @@ bool WallpaperApplication::selectNextCandidate (ActivePlaylist& playlist, std::s
     while (attempts < playlist.order.size ()) {
 	const auto candidateIndex = playlist.order[candidateOrderIndex];
 
-	if (!playlist.failedIndices.contains (candidateIndex)) {
+	if (std::find (playlist.failedIndices.begin (), playlist.failedIndices.end (), candidateIndex)
+	    == playlist.failedIndices.end ()) {
 	    outOrderIndex = candidateOrderIndex;
 	    return true;
 	}
@@ -377,7 +369,9 @@ void WallpaperApplication::advancePlaylist (
     const auto& candidatePath = playlist.definition.items[candidateIndex];
 
     if (!this->preflightWallpaper (candidatePath.string ())) {
-	playlist.failedIndices.insert (candidateIndex);
+	if (std::find (playlist.failedIndices.begin (), playlist.failedIndices.end (), candidateIndex)
+	    == playlist.failedIndices.end ())
+	    playlist.failedIndices.push_back (candidateIndex);
 
 	if (!this->selectNextCandidate (playlist, candidateOrderIndex)) {
 	    sLog.error ("All playlist items failed for ", screen, ", keeping current wallpaper");
@@ -401,7 +395,6 @@ void WallpaperApplication::advancePlaylist (
 	auto project = this->loadBackground (nextPath.string ());
 
 	this->setupPropertiesForProject (*project);
-	this->ensureBrowserForProject (*project);
 
 	this->m_backgrounds[screen] = std::move (project);
 
@@ -418,8 +411,7 @@ void WallpaperApplication::advancePlaylist (
 	    this->m_renderContext->setWallpaper (
 		screen,
 		WallpaperEngine::Render::CWallpaper::fromWallpaper (
-		    *this->m_backgrounds[screen]->wallpaper, *this->m_renderContext, *this->m_audioContext,
-		    this->m_browserContext.get (), scaling, clamp
+		    *this->m_backgrounds[screen]->wallpaper, *this->m_renderContext, *this->m_audioContext, scaling, clamp
 		)
 	    );
 	}
@@ -431,7 +423,12 @@ void WallpaperApplication::advancePlaylist (
     }
 
     if (!loaded) {
-	playlist.failedIndices.insert (playlist.order[playlist.orderIndex]);
+	{
+	    const auto failedIdx = playlist.order[playlist.orderIndex];
+	    if (std::find (playlist.failedIndices.begin (), playlist.failedIndices.end (), failedIdx)
+		== playlist.failedIndices.end ())
+		playlist.failedIndices.push_back (failedIdx);
+	}
 
 	// Keep current position; next timer tick will retry advancement
 	sLog.error ("Failed to load wallpaper for ", screen, ", will retry on next cycle");
@@ -489,22 +486,6 @@ void WallpaperApplication::setupProperties () {
     for (const auto& [background, info] : this->m_backgrounds) {
 	this->setupPropertiesForProject (*info);
     }
-}
-
-void WallpaperApplication::setupBrowser () {
-    bool anyWebProject = std::any_of (
-	this->m_backgrounds.begin (), this->m_backgrounds.end (),
-	[] (const std::pair<const std::string, ProjectUniquePtr>& pair) -> bool {
-	    return pair.second->wallpaper->is<Web> ();
-	}
-    );
-
-    // do not perform any initialization if no web background is present
-    if (!anyWebProject || this->m_browserContext) {
-	return;
-    }
-
-    this->m_browserContext = std::make_unique<WebBrowser::WebBrowserContext> (*this);
 }
 
 void WallpaperApplication::takeScreenshot (const std::filesystem::path& filename) const {
@@ -620,11 +601,11 @@ void WallpaperApplication::takeScreenshot (const std::filesystem::path& filename
 	}
 
 	if (extStr == ".bmp") {
-	    stbi_write_bmp (filename.c_str (), width, height, 3, bitmap);
+	    stbi_write_bmp (filename.string().c_str (), width, height, 3, bitmap);
 	} else if (extStr == ".png") {
-	    stbi_write_png (filename.c_str (), width, height, 3, bitmap, width * 3);
+	    stbi_write_png (filename.string().c_str (), width, height, 3, bitmap, width * 3);
 	} else if (extStr == ".jpg" || extStr == ".jpeg") {
-	    stbi_write_jpg (filename.c_str (), width, height, 3, bitmap, 100);
+	    stbi_write_jpg (filename.string().c_str (), width, height, 3, bitmap, 100);
 	}
 
 	delete[] bitmap;
@@ -663,16 +644,26 @@ void WallpaperApplication::setupAudio () {
     );
 
     if (audioProcessingRequired && this->m_context.settings.audio.audioprocessing) {
+#if WALLPAPERENGINE_ENABLE_PULSEAUDIO
 	this->m_audioRecorder
 	    = std::make_unique<WallpaperEngine::Audio::Drivers::Recorders::PulseAudioPlaybackRecorder> ();
+#else
+	this->m_audioRecorder = std::make_unique<WallpaperEngine::Audio::Drivers::Recorders::PlaybackRecorder> ();
+#endif
     } else {
 	this->m_audioRecorder = std::make_unique<WallpaperEngine::Audio::Drivers::Recorders::PlaybackRecorder> ();
     }
 
     if (this->m_context.settings.audio.automute) {
+#if WALLPAPERENGINE_ENABLE_PULSEAUDIO
 	m_audioDetector = std::make_unique<WallpaperEngine::Audio::Drivers::Detectors::PulseAudioPlayingDetector> (
 	    this->m_context, *this->m_fullScreenDetector
 	);
+#else
+	m_audioDetector = std::make_unique<WallpaperEngine::Audio::Drivers::Detectors::AudioPlayingDetector> (
+	    this->m_context, *this->m_fullScreenDetector
+	);
+#endif
     } else {
 	m_audioDetector = std::make_unique<WallpaperEngine::Audio::Drivers::Detectors::AudioPlayingDetector> (
 	    this->m_context, *this->m_fullScreenDetector
@@ -706,7 +697,7 @@ void WallpaperApplication::prepareOutputs () {
 	m_renderContext->setWallpaper (
 	    background,
 	    WallpaperEngine::Render::CWallpaper::fromWallpaper (
-		*info->wallpaper, *m_renderContext, *m_audioContext, m_browserContext.get (), scaling, clamp
+		*info->wallpaper, *m_renderContext, *m_audioContext, scaling, clamp
 	    )
 	);
     }
@@ -754,7 +745,8 @@ void WallpaperApplication::render () {
     static struct tm* timeinfo;
 
 	if (this->m_isPaused) {
-		usleep (FULLSCREEN_CHECK_WAIT_TIME);
+		std::this_thread::sleep_for (std::chrono::milliseconds (FULLSCREEN_CHECK_WAIT_TIME));
+
 		if (this->m_fullScreenDetector->anythingFullscreen () && this->m_context.state.general.keepRunning) {
 			return;
 		}

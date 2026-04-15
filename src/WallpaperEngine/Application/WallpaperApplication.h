@@ -15,11 +15,10 @@
 #include "WallpaperEngine/Audio/Drivers/SDLAudioDriver.h"
 
 #include "WallpaperEngine/Input/InputContext.h"
-#include "WallpaperEngine/WebBrowser/WebBrowserContext.h"
 
 #include "WallpaperEngine/Data/Model/Types.h"
 
-#include <set>
+#include <vector>
 
 namespace WallpaperEngine::Application {
 
@@ -109,10 +108,6 @@ private:
      */
     void setupPropertiesForProject (const Project& project);
     /**
-     * Prepares CEF browser to be used
-     */
-    void setupBrowser ();
-    /**
      * Prepares desktop environment-related things (like render, window, fullscreen detector, etc)
      */
     void setupOutput ();
@@ -141,7 +136,7 @@ private:
 	std::size_t orderIndex = 0;
 	std::chrono::steady_clock::time_point nextSwitch;
 	std::chrono::steady_clock::time_point lastUpdate;
-	std::set<std::size_t> failedIndices;
+	std::vector<std::size_t> failedIndices;
     };
 
     void initializePlaylists ();
@@ -152,7 +147,6 @@ private:
     bool selectNextCandidate (ActivePlaylist& playlist, std::size_t& outOrderIndex);
     bool preflightWallpaper (const std::string& path);
     std::vector<std::size_t> buildPlaylistOrder (const ApplicationContext::PlaylistDefinition& definition);
-    void ensureBrowserForProject (const Project& project);
     bool makeAnyViewportCurrent () const;
 
     /** The application context that contains the current app settings */
@@ -168,7 +162,6 @@ private:
     std::unique_ptr<WallpaperEngine::Render::RenderContext> m_renderContext = nullptr;
     std::unique_ptr<WallpaperEngine::Render::Drivers::VideoDriver> m_videoDriver = nullptr;
     std::unique_ptr<WallpaperEngine::Render::Drivers::Detectors::FullScreenDetector> m_fullScreenDetector = nullptr;
-    std::unique_ptr<WallpaperEngine::WebBrowser::WebBrowserContext> m_browserContext = nullptr;
     std::mt19937 m_playlistRng { std::random_device {}() };
     bool m_isPaused = false;
     bool m_screenShotTaken = false;

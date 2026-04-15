@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "glm",
+    "glew",
+    "glfw3",
+    "lz4",
+    "freeglut",
+    "zlib",
+    "sdl2",
+    "ffmpeg"
+  ]
+}

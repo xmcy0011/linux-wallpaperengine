@@ -18,6 +18,11 @@ CTexture::CTexture (RenderContext& context, TextureUniquePtr header) :
 
     // videos are a bit special, they only have one framebuffer, one mipmap
     if (this->m_header->isVideoMp4 || this->m_header->flags & TextureFlags_Video) {
+#if !WALLPAPERENGINE_ENABLE_MPV
+	sLog.exception (
+	    "Video textures require libmpv; this build was compiled with ENABLE_MPV=OFF (scene-only build)."
+	);
+#else
 	if (this->m_header->images.empty () || this->m_header->images.begin ()->second.empty ()) {
 	    sLog.exception ("Cannot load video texture, no mipmaps found");
 	}
@@ -40,6 +45,7 @@ CTexture::CTexture (RenderContext& context, TextureUniquePtr header) :
 	this->m_player->setUntimed ();
 	// texture is ready, nothing else to do
 	return;
+#endif
     }
 
     // allocate texture ids list
@@ -107,8 +113,10 @@ CTexture::CTexture (RenderContext& context, TextureUniquePtr header) :
 }
 
 CTexture::~CTexture () {
+#if WALLPAPERENGINE_ENABLE_MPV
     // first release the player to prevent using null references
     this->m_player.reset ();
+#endif
 
     if (this->m_header->isVideoMp4 || this->m_header->flags & TextureFlags_Video) {
 	glDeleteTextures (1, this->m_textureID);
@@ -247,19 +255,25 @@ uint32_t CTexture::getSpritesheetFrames () const { return this->getHeader ().spr
 float CTexture::getSpritesheetDuration () const { return this->getHeader ().spritesheetDuration; }
 
 void CTexture::incrementUsageCount () const {
+#if WALLPAPERENGINE_ENABLE_MPV
     if (this->m_player) {
 	this->m_player->incrementUsageCount ();
     }
+#endif
 }
 
 void CTexture::decrementUsageCount () const {
+#if WALLPAPERENGINE_ENABLE_MPV
     if (this->m_player) {
 	this->m_player->decrementUsageCount ();
     }
+#endif
 }
 
 void CTexture::update () const {
+#if WALLPAPERENGINE_ENABLE_MPV
     if (this->m_player) {
 	this->m_player->render ();
     }
+#endif
 }

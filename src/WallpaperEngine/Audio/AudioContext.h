@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "WallpaperEngine/Application/ApplicationContext.h"
-#include "WallpaperEngine/Audio/Drivers/Recorders/PulseAudioPlaybackRecorder.h"
 
 namespace WallpaperEngine {
 namespace Application {
@@ -16,7 +15,7 @@ namespace Audio {
 	class AudioDriver;
 
 	namespace Recorders {
-	    class PulseAudioPlaybackRecorder;
+	    class PlaybackRecorder;
 	}
     } // namespace Drivers
 

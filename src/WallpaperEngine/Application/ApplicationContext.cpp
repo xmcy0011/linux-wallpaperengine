@@ -606,7 +606,7 @@ void ApplicationContext::validateScreenshot () const {
 	sLog.exception ("Cannot determine screenshot format");
     }
 
-    const std::string extension = this->settings.screenshot.path.extension ();
+    const std::string extension = this->settings.screenshot.path.extension ().string();
 
     if (extension != ".bmp" && extension != ".png" && extension != ".jpeg" && extension != ".jpg") {
 	sLog.exception ("Cannot determine screenshot format, unknown extension ", extension);

@@ -83,7 +83,7 @@ std::shared_ptr<const TextureProvider> CPass::resolveTexture (
 
     // a bind named "previous" is just another way of telling it to use whatever texture there was already
     if (it->second == "previous") {
-	return previous ?: expected;
+	return previous != nullptr ? previous : expected;
     }
 
     // the bind actually has a name, search the FBO in the effect and return it

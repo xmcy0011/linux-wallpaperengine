@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __CALLSTACK_H__
 #define __CALLSTACK_H__
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -57,13 +58,13 @@ public:
 
     class CallInfo {
     public:
-	CallInfo (void) { /* Nothing to do */ }
-	CallInfo (long long unsigned int toffset, const string& tfunction, const string& tmodule) :
-	    offset (toffset), function (tfunction), module (tmodule) { /* Nothing to do */ }
-	~CallInfo (void) { /* Nothing to do */ }
-	long unsigned int offset;
-	string function;
-	string module;
+      CallInfo () = default;
+      CallInfo (std::uintptr_t toffset, const string& tfunction, const string& tmodule) :
+          offset (toffset), function (tfunction), module (tmodule) {}
+      ~CallInfo () = default;
+      std::uintptr_t offset;
+      string function;
+      string module;
     };
 
     static void GetCalls (vector<CallStack::CallInfo>& calls); // Get the call information.
