@@ -1,6 +1,7 @@
 #include "ApplicationContext.h"
 
 #include "Steam/FileSystem/FileSystem.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 #include "WallpaperEngine/Data/JSON.h"
 #include "WallpaperEngine/Logging/Log.h"
 
@@ -13,11 +14,23 @@
 
 #include <argparse/argparse.hpp>
 
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 #define WORKSHOP_APP_ID 431960
 #define APP_DIRECTORY "wallpaper_engine"
 
 using namespace WallpaperEngine::Application;
 using WallpaperEngine::Data::JSON::JSON;
+using WallpaperEngine::FileSystem::pathFromUtf8;
+using WallpaperEngine::FileSystem::pathToUtf8Generic;
 
 std::filesystem::path ApplicationContext::resolvePlaylistItemPath (const std::string& raw) const {
     if (raw.empty ()) {
@@ -42,7 +55,7 @@ std::filesystem::path ApplicationContext::resolvePlaylistItemPath (const std::st
 	cleaned.insert (cleaned.begin (), '/');
     }
 
-    std::filesystem::path path = std::filesystem::path (cleaned).lexically_normal ();
+    std::filesystem::path path = pathFromUtf8 (cleaned).lexically_normal ();
 
     if (std::filesystem::is_regular_file (path)) {
 	path = path.parent_path ();
@@ -68,7 +81,7 @@ std::optional<JSON> ApplicationContext::parseConfigJson (const std::filesystem::
     std::ifstream configFile (path);
 
     if (!configFile.is_open ()) {
-	sLog.exception ("Cannot open wallpaper engine config file at ", path);
+	sLog.exception ("Cannot open wallpaper engine config file at ", pathToUtf8Generic (path));
 	return std::nullopt;
     }
 
@@ -137,7 +150,7 @@ ApplicationContext::collectPlaylistItems (const JSON& playlistJson, const std::s
 	}
 
 	if (!std::filesystem::exists (resolvedPath)) {
-	    sLog.error ("Skipping playlist item not found: ", resolvedPath.string ());
+	    sLog.error ("Skipping playlist item not found: ", pathToUtf8Generic (resolvedPath));
 	    continue;
 	}
 
@@ -463,9 +476,14 @@ void ApplicationContext::loadSettingsFromArgv () {
     auto& contentGroup = program.add_group ("Content options");
 
     contentGroup.add_argument ("--assets-dir")
-	.help ("Folder where the assets are stored")
+	.help ("Folder where Wallpaper Engine assets are stored (recommended on Windows instead of auto-detect)")
 	.default_value ("")
-	.action ([this] (const std::string& value) -> void { this->settings.general.assets = value; });
+	.action ([this] (const std::string& value) -> void {
+	    this->settings.general.assets = value;
+#if defined(_WIN32)
+	    Steam::FileSystem::setWindowsAssetRoot (value);
+#endif
+	});
 
     auto& configurationGroup = program.add_group ("Wallpaper configuration options");
 
@@ -578,22 +596,39 @@ std::filesystem::path ApplicationContext::translateBackground (const std::string
 	return Steam::FileSystem::workshopDirectory (WORKSHOP_APP_ID, bgIdOrPath);
     }
 
-    return bgIdOrPath;
+    return pathFromUtf8 (bgIdOrPath);
 }
 
 void ApplicationContext::validateAssets () {
     if (!this->settings.general.assets.empty ()) {
 	sLog.out (
-	    "Using wallpaper engine's assets at ", this->settings.general.assets, " based on --assets-dir parameter"
+	    "Using wallpaper engine's assets at ", pathToUtf8Generic (this->settings.general.assets),
+	    " based on --assets-dir parameter"
 	);
+#if defined(_WIN32)
+	Steam::FileSystem::setWindowsAssetRoot (this->settings.general.assets);
+#endif
 	return;
     }
 
     try {
 	this->settings.general.assets = Steam::FileSystem::appDirectory (APP_DIRECTORY, "assets");
+#if defined(_WIN32)
+	Steam::FileSystem::setWindowsAssetRoot (this->settings.general.assets);
+#endif
     } catch (std::runtime_error&) {
+#if defined(_WIN32)
+	wchar_t module[MAX_PATH];
+	const DWORD n = GetModuleFileNameW (nullptr, module, MAX_PATH);
+	if (n == 0 || n >= MAX_PATH) {
+	    sLog.exception ("Cannot locate executable path to infer assets folder; use --assets-dir");
+	}
+	this->settings.general.assets = std::filesystem::path (module).parent_path () / "assets";
+	Steam::FileSystem::setWindowsAssetRoot (this->settings.general.assets);
+#else
 	// set current path as assets' folder
 	this->settings.general.assets = std::filesystem::canonical ("/proc/self/exe").parent_path () / "assets";
+#endif
     }
 }
 
@@ -606,7 +641,7 @@ void ApplicationContext::validateScreenshot () const {
 	sLog.exception ("Cannot determine screenshot format");
     }
 
-    const std::string extension = this->settings.screenshot.path.extension ().string();
+    const std::string extension = pathToUtf8Generic (this->settings.screenshot.path.extension ());
 
     if (extension != ".bmp" && extension != ".png" && extension != ".jpeg" && extension != ".jpg") {
 	sLog.exception ("Cannot determine screenshot format, unknown extension ", extension);

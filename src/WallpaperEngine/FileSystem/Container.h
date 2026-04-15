@@ -53,13 +53,19 @@ public:
     VirtualAdapter& getVFS () const;
 
 private:
+    /** Adapter chosen for a logical path and the path relative to that mount (no leading slash). */
+    struct MountResolution {
+	Adapter& adapter;
+	std::filesystem::path pathWithinMount;
+    };
+
     /**
      * Searches for an adapter to handle the given file
      *
      * @param path The path to the file
-     * @return The adapter handling the file
+     * @return The adapter and the path passed to adapter methods (must match what @ref Adapter::exists used)
      */
-    Adapter& resolveAdapterForFile (const std::filesystem::path& path) const;
+    MountResolution resolveAdapterForFile (const std::filesystem::path& path, bool triedVfsRootSlash = false) const;
     /** The factories available for this container */
     std::vector<FactoryUniquePtr> m_factories;
     /** Mountpoints on this container */

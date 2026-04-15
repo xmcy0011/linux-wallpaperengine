@@ -6,6 +6,7 @@
 #include "ShaderConstantParser.h"
 #include "WallpaperEngine/Data/Model/Object.h"
 #include "WallpaperEngine/Data/Model/Project.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 #include "WallpaperEngine/Logging/Log.h"
 
 #include <glm/gtc/constants.hpp>
@@ -13,6 +14,7 @@
 
 using namespace WallpaperEngine::Data::Parsers;
 using namespace WallpaperEngine::Data::Model;
+using WallpaperEngine::FileSystem::pathFromUtf8;
 
 ObjectUniquePtr ObjectParser::parse (const JSON& it, const Project& project) {
     const auto imageIt = it.find ("image");
@@ -332,7 +334,7 @@ ParticleUniquePtr ObjectParser::parseParticle (const JSON& it, const Project& pr
 	if (!particleFile.empty ()) {
 	    try {
 		particleJson
-		    = WallpaperEngine::Data::JSON::JSON::parse (project.assetLocator->readString (particleFile));
+		    = WallpaperEngine::Data::JSON::JSON::parse (project.assetLocator->readString (pathFromUtf8 (particleFile)));
 	    } catch (std::runtime_error& e) {
 		sLog.error ("Cannot load particle file: ", particleFile, " - ", e.what ());
 	    }

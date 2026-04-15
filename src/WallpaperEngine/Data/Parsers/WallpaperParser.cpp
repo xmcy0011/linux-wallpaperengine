@@ -3,10 +3,11 @@
 #include "ObjectParser.h"
 #include "WallpaperEngine/Data/Model/Project.h"
 #include "WallpaperEngine/Data/Model/Wallpaper.h"
-#include "WallpaperEngine/FileSystem/Container.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 #include "WallpaperEngine/Logging/Log.h"
 
 using namespace WallpaperEngine::Data::Parsers;
+using WallpaperEngine::FileSystem::pathFromUtf8;
 
 WallpaperUniquePtr WallpaperParser::parse (const JSON& file, Project& project) {
     switch (project.type) {
@@ -22,7 +23,7 @@ WallpaperUniquePtr WallpaperParser::parse (const JSON& file, Project& project) {
 }
 
 SceneUniquePtr WallpaperParser::parseScene (const JSON& file, Project& project) {
-    const auto scene = JSON::parse (project.assetLocator->readString (file));
+    const auto scene = JSON::parse (project.assetLocator->readString (pathFromUtf8 (file.get<std::string> ())));
     const auto camera = scene.require ("camera", "Scenes must have a camera section");
     const auto general = scene.require ("general", "Scenes must have a general section");
     const auto projection

@@ -1,6 +1,7 @@
 #include "TextureCache.h"
 
 #include "WallpaperEngine/FileSystem/Container.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 
 #include "CTexture.h"
 #include "WallpaperEngine/Assets/AssetLoadException.h"
@@ -29,7 +30,7 @@ std::shared_ptr<const TextureProvider> TextureCache::resolve (const std::string&
 	    // Create metadata loader lambda that captures the assetLocator
 	    // so we need to construct the full path here
 	    auto metadataLoader = [&project] (const std::string& metaFilename) -> std::string {
-		std::filesystem::path fullPath = std::filesystem::path ("materials") / metaFilename;
+		std::filesystem::path fullPath = std::filesystem::path ("materials") / pathFromUtf8 (metaFilename);
 		return project->assetLocator->readString (fullPath);
 	    };
 

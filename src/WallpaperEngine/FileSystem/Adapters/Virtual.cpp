@@ -1,6 +1,7 @@
 #include "Virtual.h"
 
 #include "WallpaperEngine/Assets/AssetLoadException.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 
 #include <cstring>
 
@@ -44,7 +45,9 @@ void VirtualAdapter::add (const std::filesystem::path& path, MemoryStreamSharedP
     this->files.insert_or_assign (path, stream);
 }
 
-bool VirtualFactory::handlesMountpoint (const std::filesystem::path& path) const { return path.string () == "virtual"; }
+bool VirtualFactory::handlesMountpoint (const std::filesystem::path& path) const {
+    return WallpaperEngine::FileSystem::pathToUtf8Generic (path) == "virtual";
+}
 
 AdapterSharedPtr VirtualFactory::create (const std::filesystem::path& path) const {
     return std::make_unique<VirtualAdapter> ();

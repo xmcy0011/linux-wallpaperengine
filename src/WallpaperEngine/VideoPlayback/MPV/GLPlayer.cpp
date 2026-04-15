@@ -1,5 +1,6 @@
 #include "GLPlayer.h"
 
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 #include "WallpaperEngine/Logging/Log.h"
 
 #include <mpv/render_gl.h>
@@ -248,24 +249,30 @@ void GLPlayer::init () {
     mpv_set_property_string (this->m_handle, "pause", this->m_paused ? "yes" : "no");
 }
 
-void GLPlayer::setSource (const std::filesystem::path& file) { this->m_file = file; }
+void GLPlayer::setSource (const std::filesystem::path& file) {
+    this->m_stream.reset ();
+    this->m_fileUtf8 = WallpaperEngine::FileSystem::pathToUtf8Generic (file);
+}
 
-void GLPlayer::setSource (MemoryStreamProtocolUniquePtr source) { this->m_stream = std::move (source); }
+void GLPlayer::setSource (MemoryStreamProtocolUniquePtr source) {
+    this->m_fileUtf8.reset ();
+    this->m_stream = std::move (source);
+}
 
 void GLPlayer::play () {
     if (this->m_handle != nullptr) {
 	sLog.exception ("Cannot play the same GLPlayer twice");
     }
 
-    if (!this->m_file.has_value () && !this->m_stream.has_value ()) {
+    if (!this->m_fileUtf8.has_value () && !this->m_stream.has_value ()) {
 	sLog.exception ("Cannot play a GLPlayer without a source");
     }
 
     this->init ();
 
-    if (this->m_file.has_value ()) {
+    if (this->m_fileUtf8.has_value ()) {
 	// build the path to the video file
-	const char* command[] = { "loadfile", this->m_file.value ().c_str (), nullptr };
+	const char* command[] = { "loadfile", this->m_fileUtf8.value ().c_str (), nullptr };
 
 	if (mpv_command (this->m_handle, command) < 0) {
 	    sLog.exception ("Cannot load video to play");

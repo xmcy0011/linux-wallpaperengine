@@ -10,6 +10,9 @@ set_property(GLOBAL PROPERTY OS_FOLDERS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 set(OpenGL_GL_PREFERENCE "LEGACY")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -59,6 +62,20 @@ else()
 endif()
 find_package(LZ4 REQUIRED)
 find_package(FFMPEG REQUIRED)
+
+# GLFW: on Windows plain "glfw" becomes glfw.lib (wrong); vcpkg provides CONFIG target (glfw / glfw3::glfw).
+if(WIN32)
+    find_package(glfw3 CONFIG REQUIRED)
+else()
+    find_package(glfw3 CONFIG QUIET)
+endif()
+if(TARGET glfw3::glfw)
+    set(GLFW_LINK_TARGET glfw3::glfw)
+elseif(TARGET glfw)
+    set(GLFW_LINK_TARGET glfw)
+else()
+    set(GLFW_LINK_TARGET glfw)
+endif()
 
 # GLM (header-only): WallpaperEngine + vendored SPIRV-Cross include <glm/...>. Linux often has
 # system headers; MSVC + vcpkg needs the glm port and include path before External subdirs build.
@@ -260,6 +277,7 @@ set(COMMON_SOURCES
 
     src/WallpaperEngine/FileSystem/Container.h
     src/WallpaperEngine/FileSystem/Container.cpp
+    src/WallpaperEngine/FileSystem/Utf8Path.h
     src/WallpaperEngine/FileSystem/Adapters/Types.h
     src/WallpaperEngine/FileSystem/Adapters/Directory.cpp
     src/WallpaperEngine/FileSystem/Adapters/Directory.h
@@ -472,6 +490,12 @@ add_library(
     ${WAYLAND_SOURCES}
     ${X11_SOURCES}
     ${DEMOMODE_SOURCES})
+    
+if(WIN32)
+    # MSVC omits the import .lib when the DLL has no exported symbols; this project does not use
+    # __declspec(dllexport) on its API. Export object symbols so the implib is created for the .exe link.
+    set_target_properties(linux-wallpaperengine-lib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
 target_link_libraries (linux-wallpaperengine-lib PUBLIC
     ${GLM_LINK_TARGET}
@@ -488,7 +512,7 @@ target_link_libraries (linux-wallpaperengine-lib PUBLIC
     glslang
     spirv-cross-core
     spirv-cross-glsl
-    glfw
+    ${GLFW_LINK_TARGET}
     argparse
     qjs)
 if(WIN32)
@@ -525,7 +549,7 @@ if (BUILD_TESTING)
         glslang
         spirv-cross-core
         spirv-cross-glsl
-        glfw
+        ${GLFW_LINK_TARGET}
         argparse
         qjs)
     if(WIN32)

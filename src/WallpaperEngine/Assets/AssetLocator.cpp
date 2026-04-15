@@ -1,8 +1,10 @@
 #include "AssetLocator.h"
 
 #include "AssetLoadException.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 
 using namespace WallpaperEngine::Assets;
+using namespace WallpaperEngine::FileSystem;
 
 AssetLocator::AssetLocator (ContainerUniquePtr filesystem) : m_filesystem (std::move (filesystem)) { }
 
@@ -22,7 +24,9 @@ std::string AssetLocator::shader (const std::filesystem::path& filename) const {
 		    // replace the old path with the new one
 		    std::string contents = this->m_filesystem->readString (shader);
 
-		    sLog.out ("Replaced ", filename, " with compat ", shader);
+		    sLog.out (
+			"Replaced ", pathToUtf8Generic (filename), " with compat ", pathToUtf8Generic (shader)
+		    );
 
 		    return contents;
 		} catch (std::filesystem::filesystem_error&) {
@@ -70,7 +74,9 @@ std::string AssetLocator::readString (const std::filesystem::path& filename) con
 }
 
 ReadStreamSharedPtr AssetLocator::texture (const std::filesystem::path& filename) const {
-    const auto final = std::filesystem::path ("materials") / filename.string ().append (".tex");
+    std::string texKey = pathToUtf8Generic (filename);
+    texKey += ".tex";
+    const auto final = std::filesystem::path ("materials") / pathFromUtf8 (texKey);
 
     try {
 	return this->m_filesystem->read (final);

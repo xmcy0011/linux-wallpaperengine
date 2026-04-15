@@ -9,10 +9,26 @@
 using namespace WallpaperEngine::FileSystem;
 using namespace WallpaperEngine::FileSystem::Adapters;
 
+namespace {
+/** Avoid path::string() prefix checks (encoding / separator issues on Windows). */
+bool resolvedPathUnderBase (const std::filesystem::path& base, const std::filesystem::path& resolved) {
+    const auto rel = resolved.lexically_relative (base);
+    if (rel.empty ()) {
+	return resolved == base;
+    }
+    for (const auto& part : rel) {
+	if (part == "..") {
+	    return false;
+	}
+    }
+    return true;
+}
+} // namespace
+
 ReadStreamSharedPtr DirectoryAdapter::open (const std::filesystem::path& path) const {
     auto finalpath = std::filesystem::canonical (this->basepath / path);
 
-    if (finalpath.string ().find (this->basepath.string ()) != 0) {
+    if (!resolvedPathUnderBase (this->basepath, finalpath)) {
 	throw std::filesystem::filesystem_error ("Cannot find file", path, std::error_code ());
     }
 
@@ -33,7 +49,7 @@ bool DirectoryAdapter::exists (const std::filesystem::path& path) const {
     try {
 	const auto finalpath = std::filesystem::canonical (this->basepath / path);
 
-	if (finalpath.string ().find (this->basepath.string ()) != 0) {
+	if (!resolvedPathUnderBase (this->basepath, finalpath)) {
 	    return false;
 	}
 
@@ -56,7 +72,7 @@ bool DirectoryAdapter::exists (const std::filesystem::path& path) const {
 std::filesystem::path DirectoryAdapter::physicalPath (const std::filesystem::path& path) const {
     auto finalpath = std::filesystem::canonical (this->basepath / path);
 
-    if (finalpath.string ().find (this->basepath.string ()) != 0) {
+    if (!resolvedPathUnderBase (this->basepath, finalpath)) {
 	throw std::filesystem::filesystem_error ("Cannot find file", path, std::error_code ());
     }
 

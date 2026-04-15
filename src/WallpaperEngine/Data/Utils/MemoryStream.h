@@ -13,7 +13,7 @@ struct MemoryStream : std::istream, private std::streambuf {
     std::streambuf::pos_type
     seekoff (std::streambuf::off_type off, std::ios_base::seekdir dir, std::ios_base::openmode which) override {
 	if (dir == std::ios_base::cur) {
-	    gbump (off);
+	    gbump (static_cast<int> (off));
 	} else if (dir == std::ios_base::end) {
 	    setg (eback (), egptr () + off, egptr ());
 	} else if (dir == std::ios_base::beg) {

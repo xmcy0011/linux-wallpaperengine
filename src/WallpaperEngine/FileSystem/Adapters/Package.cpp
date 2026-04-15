@@ -3,7 +3,7 @@
 
 #include "Package.h"
 
-#include "WallpaperEngine/Assets/AssetLoadException.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 #include "WallpaperEngine/Data/Parsers/PackageParser.h"
 #include "WallpaperEngine/Data/Utils/BinaryReader.h"
 #include "WallpaperEngine/Data/Utils/MemoryStream.h"
@@ -14,9 +14,10 @@ using namespace WallpaperEngine::FileSystem;
 using namespace WallpaperEngine::FileSystem::Adapters;
 
 ReadStreamSharedPtr PackageAdapter::open (const std::filesystem::path& path) const {
+    const std::string pathKey = pathToUtf8Generic (path);
     // find the file entry
-    const auto it = std::ranges::find_if (this->package->files, [&path] (const auto& file) {
-	return file->filename == path.string ();
+    const auto it = std::ranges::find_if (this->package->files, [&pathKey] (const auto& file) {
+	return file->filename == pathKey;
     });
 
     if (it == this->package->files.end ()) {
@@ -35,8 +36,9 @@ ReadStreamSharedPtr PackageAdapter::open (const std::filesystem::path& path) con
 }
 
 bool PackageAdapter::exists (const std::filesystem::path& path) const {
+    const std::string pathKey = pathToUtf8Generic (path);
     for (const auto& file : this->package->files) {
-	if (file->filename == path.string ()) {
+	if (file->filename == pathKey) {
 	    return true;
 	}
     }

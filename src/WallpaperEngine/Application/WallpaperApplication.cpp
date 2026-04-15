@@ -8,6 +8,7 @@
 #include "WallpaperEngine/Audio/Drivers/Recorders/PulseAudioPlaybackRecorder.h"
 #endif
 #include "WallpaperEngine/FileSystem/Container.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 #include "WallpaperEngine/Logging/Log.h"
 #include "WallpaperEngine/Render/Drivers/VideoFactories.h"
 #include "WallpaperEngine/Render/RenderContext.h"
@@ -23,7 +24,9 @@
 #endif /* DEMOMODE */
 
 #include <algorithm>
+#include <cstdlib>
 #include <numeric>
+#include <string>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 #include <thread>
@@ -70,7 +73,7 @@ WallpaperApplication::WallpaperApplication (ApplicationContext& context) : m_con
 AssetLocatorUniquePtr WallpaperApplication::setupAssetLocator (const std::string& bg) const {
     auto container = std::make_unique<Container> ();
 
-    const std::filesystem::path path = bg;
+    const std::filesystem::path path = pathFromUtf8 (bg);
 
     container->mount (path, "/");
     try {
@@ -84,7 +87,9 @@ AssetLocatorUniquePtr WallpaperApplication::setupAssetLocator (const std::string
     try {
 	container->mount (this->m_context.settings.general.assets, "/");
     } catch (std::runtime_error&) {
-	sLog.exception ("Cannot find a valid assets folder, resolved to ", this->m_context.settings.general.assets);
+	sLog.exception (
+	    "Cannot find a valid assets folder, resolved to ", pathToUtf8Generic (this->m_context.settings.general.assets)
+	);
     }
 
     // mount the current directory as root
@@ -178,16 +183,17 @@ void WallpaperApplication::loadBackgrounds () {
 	    path = this->m_context.settings.general.defaultPlaylist->items.front ();
 	}
 
-	this->m_backgrounds["default"] = this->loadBackground (path.string());
+	this->m_backgrounds["default"] = this->loadBackground (pathToUtf8Generic (path));
 	return;
     }
 
     for (const auto& [screen, path] : this->m_context.settings.general.screenBackgrounds) {
 	// screens with no screen should use the default
 	if (path.empty ()) {
-	    this->m_backgrounds[screen] = this->loadBackground (this->m_context.settings.general.defaultBackground.string());
+	    this->m_backgrounds[screen]
+		= this->loadBackground (pathToUtf8Generic (this->m_context.settings.general.defaultBackground));
 	} else {
-	    this->m_backgrounds[screen] = this->loadBackground (path.string());
+	    this->m_backgrounds[screen] = this->loadBackground (pathToUtf8Generic (path));
 	}
     }
 }
@@ -368,7 +374,7 @@ void WallpaperApplication::advancePlaylist (
     const auto candidateIndex = playlist.order[candidateOrderIndex];
     const auto& candidatePath = playlist.definition.items[candidateIndex];
 
-    if (!this->preflightWallpaper (candidatePath.string ())) {
+    if (!this->preflightWallpaper (pathToUtf8Generic (candidatePath))) {
 	if (std::find (playlist.failedIndices.begin (), playlist.failedIndices.end (), candidateIndex)
 	    == playlist.failedIndices.end ())
 	    playlist.failedIndices.push_back (candidateIndex);
@@ -392,7 +398,7 @@ void WallpaperApplication::advancePlaylist (
 	    throw std::runtime_error ("No viewport available");
 	}
 
-	auto project = this->loadBackground (nextPath.string ());
+	auto project = this->loadBackground (pathToUtf8Generic (nextPath));
 
 	this->setupPropertiesForProject (*project);
 
@@ -565,10 +571,11 @@ void WallpaperApplication::takeScreenshot (const std::filesystem::path& filename
     }
 
     const auto extension = filename.extension ();
-    const std::string extStr = extension.string ();
+    const std::string extStr = pathToUtf8Generic (extension);
+    const std::string filenameUtf8 = pathToUtf8Generic (filename);
 
     // Offload pixel processing and saving to a background thread to avoid hitches
-    std::thread ([captures, width, height, vflip, extStr, filename] () {
+    std::thread ([captures, width, height, vflip, extStr, filenameUtf8] () {
 	auto* bitmap = new uint8_t[width * height * 3] { 0 };
 
 	for (const auto& capture : captures) {
@@ -601,11 +608,11 @@ void WallpaperApplication::takeScreenshot (const std::filesystem::path& filename
 	}
 
 	if (extStr == ".bmp") {
-	    stbi_write_bmp (filename.string().c_str (), width, height, 3, bitmap);
+	    stbi_write_bmp (filenameUtf8.c_str (), width, height, 3, bitmap);
 	} else if (extStr == ".png") {
-	    stbi_write_png (filename.string().c_str (), width, height, 3, bitmap, width * 3);
+	    stbi_write_png (filenameUtf8.c_str (), width, height, 3, bitmap, width * 3);
 	} else if (extStr == ".jpg" || extStr == ".jpeg") {
-	    stbi_write_jpg (filename.string().c_str (), width, height, 3, bitmap, 100);
+	    stbi_write_jpg (filenameUtf8.c_str (), width, height, 3, bitmap, 100);
 	}
 
 	delete[] bitmap;
@@ -613,14 +620,27 @@ void WallpaperApplication::takeScreenshot (const std::filesystem::path& filename
 }
 
 void WallpaperApplication::setupOutput () {
-    const char* XDG_SESSION_TYPE = getenv ("XDG_SESSION_TYPE");
-
-    if (!XDG_SESSION_TYPE) {
+    std::string sessionType;
+#if defined(_WIN32)
+    // XDG_SESSION_TYPE is a Linux session hint; Windows/GLFW register drivers under "default" (windowed) or "x11"
+    // (desktop background, same factory as on X11).
+    if (const char* xdg = std::getenv ("XDG_SESSION_TYPE")) {
+	sessionType = xdg;
+    } else if (this->m_context.settings.render.mode == ApplicationContext::DESKTOP_BACKGROUND) {
+	sessionType = "x11";
+    } else {
+	sessionType = DEFAULT_WINDOW_NAME;
+    }
+#else
+    const char* xdg = std::getenv ("XDG_SESSION_TYPE");
+    if (xdg == nullptr) {
 	sLog.exception (
 	    "Cannot read environment variable XDG_SESSION_TYPE, window server detection failed. Please ensure proper "
 	    "values are set"
 	);
     }
+    sessionType = xdg;
+#endif
 
     sLog.debug ("Checking for window servers: ");
 
@@ -629,10 +649,10 @@ void WallpaperApplication::setupOutput () {
     }
 
     this->m_videoDriver = sVideoFactories.createVideoDriver (
-	this->m_context.settings.render.mode, XDG_SESSION_TYPE, this->m_context, *this
+	this->m_context.settings.render.mode, sessionType, this->m_context, *this
     );
     this->m_fullScreenDetector
-	= sVideoFactories.createFullscreenDetector (XDG_SESSION_TYPE, this->m_context, *this->m_videoDriver);
+	= sVideoFactories.createFullscreenDetector (sessionType, this->m_context, *this->m_videoDriver);
 }
 
 void WallpaperApplication::setupAudio () {

@@ -71,7 +71,8 @@ protected:
     bool m_muted = false;
     bool m_untimed = false;
     bool m_paused = false;
-    std::optional<std::filesystem::path> m_file;
+    /** UTF-8 path for mpv loadfile (never use path::c_str() — MSVC uses the ANSI code page). */
+    std::optional<std::string> m_fileUtf8;
     std::optional<MemoryStreamProtocolUniquePtr> m_stream;
     uint32_t m_usageCount = 0;
 };

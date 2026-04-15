@@ -4,13 +4,14 @@
 #include "WallpaperEngine/Data/Model/Effect.h"
 #include "WallpaperEngine/Data/Model/Material.h"
 #include "WallpaperEngine/Data/Model/Project.h"
-#include "WallpaperEngine/FileSystem/Container.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 
 using namespace WallpaperEngine::Data::Parsers;
 using namespace WallpaperEngine::Data::Model;
+using WallpaperEngine::FileSystem::pathFromUtf8;
 
 EffectUniquePtr EffectParser::load (const Project& project, const std::string& filename) {
-    const auto effectJson = JSON::parse (project.assetLocator->readString (filename));
+    const auto effectJson = JSON::parse (project.assetLocator->readString (pathFromUtf8 (filename)));
 
     return parse (effectJson, project);
 }

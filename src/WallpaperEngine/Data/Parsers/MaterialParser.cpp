@@ -3,13 +3,14 @@
 #include "WallpaperEngine/Data/Model/Material.h"
 #include "WallpaperEngine/Data/Model/Project.h"
 #include "WallpaperEngine/Data/Parsers/ShaderConstantParser.h"
-#include "WallpaperEngine/FileSystem/Container.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 
 using namespace WallpaperEngine::Data::Parsers;
 using namespace WallpaperEngine::Data::Model;
+using WallpaperEngine::FileSystem::pathFromUtf8;
 
 MaterialUniquePtr MaterialParser::load (const Project& project, const std::string& filename) {
-    const auto materialJson = JSON::parse (project.assetLocator->readString (filename));
+    const auto materialJson = JSON::parse (project.assetLocator->readString (pathFromUtf8 (filename)));
 
     return parse (materialJson, filename, project);
 }
