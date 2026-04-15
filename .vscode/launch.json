@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            // 运行前编译
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/build/output/Debug/linux-wallpaperengine.exe",
+            "args": [
+                "--assets-dir",
+                "D:/Program Files (x86)/Steam/steamapps/common/wallpaper_engine/assets",
+                "D:/Program Files (x86)/Steam/steamapps/workshop/content/431960/2863707211",
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/output/Debug",
+            "environment": [],
+            "console": "integratedTerminal",
+            
+        }
+    ],
+    "version": "2.0.0"
+}

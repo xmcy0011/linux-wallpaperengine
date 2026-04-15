@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "compilerPath": "cl.exe", // 或 g++-13, clang++
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/src/External/**",
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "windows-msvc-x64"
+        }
+    ],
+    "version": 4
+}
