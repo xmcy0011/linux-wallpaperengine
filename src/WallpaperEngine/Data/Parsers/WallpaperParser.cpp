@@ -7,7 +7,7 @@
 #include "WallpaperEngine/Logging/Log.h"
 
 using namespace WallpaperEngine::Data::Parsers;
-using WallpaperEngine::FileSystem::pathFromUtf8;
+using WallpaperEngine::FileSystem::string2wstring;
 
 WallpaperUniquePtr WallpaperParser::parse (const JSON& file, Project& project) {
     switch (project.type) {
@@ -23,7 +23,7 @@ WallpaperUniquePtr WallpaperParser::parse (const JSON& file, Project& project) {
 }
 
 SceneUniquePtr WallpaperParser::parseScene (const JSON& file, Project& project) {
-    const auto scene = JSON::parse (project.assetLocator->readString (pathFromUtf8 (file.get<std::string> ())));
+    const auto scene = JSON::parse (project.assetLocator->readString (string2wstring (file.get<std::string> ())));
     const auto camera = scene.require ("camera", "Scenes must have a camera section");
     const auto general = scene.require ("general", "Scenes must have a general section");
     const auto projection
@@ -94,7 +94,7 @@ WebUniquePtr WallpaperParser::parseWeb (const JSON& file, Project& project) {
     });
 }
 
-ObjectList WallpaperParser::parseObjects (const JSON& objects, const Project& project) {
+ObjectList WallpaperParser:: parseObjects (const JSON& objects, const Project& project) {
     ObjectList result = {};
 
     for (const auto& cur : objects) {

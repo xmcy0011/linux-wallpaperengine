@@ -3,11 +3,11 @@
 
 #include "Container.h"
 
-#include "WallpaperEngine/FileSystem/Utf8Path.h"
 #include "Adapters/Directory.h"
 #include "Adapters/Package.h"
 #include "Adapters/Types.h"
 #include "Adapters/Virtual.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 
 using namespace WallpaperEngine::FileSystem;
 using namespace WallpaperEngine::FileSystem::Adapters;
@@ -22,13 +22,6 @@ std::filesystem::path normalize_path (const std::filesystem::path& input_path) {
     return input_path.lexically_normal ();
 }
 
-/** Mount roots are POSIX-style; compare UTF-8 generic keys (MSVC generic_string() uses the ANSI code page). */
-static bool path_has_prefix (const std::filesystem::path& path, const std::filesystem::path& root) {
-    const std::string p = pathToUtf8Generic (path);
-    const std::string r = pathToUtf8Generic (root);
-    return p.size () >= r.size () && p.compare (0, r.size (), r) == 0;
-}
-
 Container::Container () {
     // register all available factories
     this->m_factories.push_back (std::make_unique<VirtualFactory> ());
@@ -40,8 +33,9 @@ Container::Container () {
 }
 
 ReadStreamSharedPtr Container::read (const std::filesystem::path& path) const {
-    const auto resolved = this->resolveAdapterForFile (path);
-    return resolved.adapter.open (resolved.pathWithinMount);
+    const auto normalized = normalize_path (path);
+
+    return this->resolveAdapterForFile (path).open (normalized);
 }
 
 std::string Container::readString (const std::filesystem::path& path) const {
@@ -52,75 +46,50 @@ std::string Container::readString (const std::filesystem::path& path) const {
 }
 
 std::filesystem::path Container::physicalPath (const std::filesystem::path& path) const {
-    const auto resolved = this->resolveAdapterForFile (path);
-    return resolved.adapter.physicalPath (resolved.pathWithinMount);
-}
+    const auto normalized = normalize_path (path);
 
+    return this->resolveAdapterForFile (path).physicalPath (normalized);
+}
 AdapterSharedPtr Container::mount (const std::filesystem::path& path, const std::filesystem::path& mountPoint) {
     // check if any adapter can handle the path
     for (const auto& factory : this->m_factories) {
-	if (factory->handlesMountpoint (path) == false) {
-	    continue;
-	}
+        if (factory->handlesMountpoint (path) == false) {
+            continue;
+        }
 
-	return this->m_mountpoints.emplace_back (mountPoint, factory->create (path)).second;
+        return this->m_mountpoints.emplace_back (mountPoint, factory->create (path)).second;
     }
 
     throw std::filesystem::filesystem_error (
-	"The specified mount cannot be handled by any of the filesystem adapters", path, std::error_code ()
+        "The specified mount cannot be handled by any of the filesystem adapters", wstring2string (path), std::error_code ()
     );
 }
 
 VirtualAdapter& Container::getVFS () const { return *this->m_vfs; }
 
-Container::MountResolution Container::resolveAdapterForFile (const std::filesystem::path& path, const bool triedVfsRootSlash) const {
-    const auto normalized = normalize_path (path);
-    const std::string norm = pathToUtf8Generic (normalized);
+Adapter& Container::resolveAdapterForFile (const std::filesystem::path& path) const {
+    //    const auto normalized = normalize_path (path);
+    const auto normalized = path;
 
     for (const auto& [root, adapter] : this->m_mountpoints) {
-	if (!path_has_prefix (normalized, root)) {
-	    continue;
-	}
+        if (normalized.string ().starts_with (root.string ()) == false) {
+            continue;
+        }
 
-	const std::string rootStr = pathToUtf8Generic (root);
-	std::string_view tail (norm);
-	if (tail.size () < rootStr.size ()) {
-	    continue;
-	}
-	tail.remove_prefix (rootStr.size ());
-	while (!tail.empty () && (tail.front () == '/' || tail.front () == '\\')) {
-	    tail.remove_prefix (1);
-	}
-	if (tail.empty ()) {
-	    continue;
-	}
+        if (const auto relative = normalized.string ().substr (root.string ().length ());
+            adapter->exists (relative) == false) {
+            continue;
+        }
 
-	const std::filesystem::path relPath = pathFromUtf8 (tail);
-	if (adapter->exists (relPath) == false) {
-	    continue;
-	}
-
-	return MountResolution { *adapter, relPath };
+        return *adapter;
     }
 
-    // Map a relative logical path to the VFS root once. On Windows, std::filesystem::path("/") /
-    // normalized can collapse to a native absolute path or normalize in ways that never match the
-    // POSIX "/" mount while still differing from `norm`, which can recurse until stack overflow.
-#if defined(_WIN32)
-    const bool tryVfsRootSlash = !normalized.is_absolute ();
-#else
-    const bool tryVfsRootSlash = true;
-#endif
-    if (!triedVfsRootSlash && !norm.empty () && tryVfsRootSlash
-	&& !path_has_prefix (normalized, std::filesystem::path ("/"))) {
-	const auto rooted = normalize_path (std::filesystem::path ("/") / normalized);
-	const std::string rootedStr = pathToUtf8Generic (rooted);
-	if (rootedStr != norm) {
-	    return this->resolveAdapterForFile (rooted, true);
-	}
+    if (normalized.string ().starts_with ("/") == false) {
+        // try resolving as absolute, just in case it's relative to the root
+        return this->resolveAdapterForFile ("/" + wstring2string (normalized));
     }
 
     throw std::filesystem::filesystem_error (
-	"Cannot find requested file in any of the mountpoints", path, std::error_code ()
+        "Cannot find requested file in any of the mountpoints", wstring2string (path), std::error_code ()
     );
 }

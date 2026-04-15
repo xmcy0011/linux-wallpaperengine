@@ -251,7 +251,7 @@ void GLPlayer::init () {
 
 void GLPlayer::setSource (const std::filesystem::path& file) {
     this->m_stream.reset ();
-    this->m_fileUtf8 = WallpaperEngine::FileSystem::pathToUtf8Generic (file);
+    this->m_fileUtf8 = WallpaperEngine::FileSystem::wstring2string (file);
 }
 
 void GLPlayer::setSource (MemoryStreamProtocolUniquePtr source) {

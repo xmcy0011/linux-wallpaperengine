@@ -9,3 +9,4 @@ packaging/archlinux/*
 *-protocol.o
 *-protocol.c
 *-protocol.h
+*vc140.pdb

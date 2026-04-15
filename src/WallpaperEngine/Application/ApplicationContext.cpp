@@ -29,8 +29,6 @@
 
 using namespace WallpaperEngine::Application;
 using WallpaperEngine::Data::JSON::JSON;
-using WallpaperEngine::FileSystem::pathFromUtf8;
-using WallpaperEngine::FileSystem::pathToUtf8Generic;
 
 std::filesystem::path ApplicationContext::resolvePlaylistItemPath (const std::string& raw) const {
     if (raw.empty ()) {
@@ -55,7 +53,8 @@ std::filesystem::path ApplicationContext::resolvePlaylistItemPath (const std::st
 	cleaned.insert (cleaned.begin (), '/');
     }
 
-    std::filesystem::path path = pathFromUtf8 (cleaned).lexically_normal ();
+	std::filesystem::path tmpPath = cleaned;
+    std::filesystem::path path = tmpPath.lexically_normal ();
 
     if (std::filesystem::is_regular_file (path)) {
 	path = path.parent_path ();
@@ -81,7 +80,7 @@ std::optional<JSON> ApplicationContext::parseConfigJson (const std::filesystem::
     std::ifstream configFile (path);
 
     if (!configFile.is_open ()) {
-	sLog.exception ("Cannot open wallpaper engine config file at ", pathToUtf8Generic (path));
+	sLog.exception ("Cannot open wallpaper engine config file at ", path);
 	return std::nullopt;
     }
 
@@ -150,7 +149,7 @@ ApplicationContext::collectPlaylistItems (const JSON& playlistJson, const std::s
 	}
 
 	if (!std::filesystem::exists (resolvedPath)) {
-	    sLog.error ("Skipping playlist item not found: ", pathToUtf8Generic (resolvedPath));
+	    sLog.error ("Skipping playlist item not found: ", resolvedPath);
 	    continue;
 	}
 
@@ -596,13 +595,13 @@ std::filesystem::path ApplicationContext::translateBackground (const std::string
 	return Steam::FileSystem::workshopDirectory (WORKSHOP_APP_ID, bgIdOrPath);
     }
 
-    return pathFromUtf8 (bgIdOrPath);
+    return bgIdOrPath;
 }
 
 void ApplicationContext::validateAssets () {
     if (!this->settings.general.assets.empty ()) {
 	sLog.out (
-	    "Using wallpaper engine's assets at ", pathToUtf8Generic (this->settings.general.assets),
+	    "Using wallpaper engine's assets at ", this->settings.general.assets,
 	    " based on --assets-dir parameter"
 	);
 #if defined(_WIN32)
@@ -641,7 +640,7 @@ void ApplicationContext::validateScreenshot () const {
 	sLog.exception ("Cannot determine screenshot format");
     }
 
-    const std::string extension = pathToUtf8Generic (this->settings.screenshot.path.extension ());
+    const std::string extension = this->settings.screenshot.path.extension ().string ();
 
     if (extension != ".bmp" && extension != ".png" && extension != ".jpeg" && extension != ".jpg") {
 	sLog.exception ("Cannot determine screenshot format, unknown extension ", extension);

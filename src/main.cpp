@@ -9,7 +9,7 @@ WallpaperEngine::Application::WallpaperApplication* app;
 
 void signalhandler (const int sig) {
     if (app == nullptr) {
-	return;
+        return;
     }
 
     app->signal (sig);
@@ -22,36 +22,36 @@ void initLogging () {
 
 int main (int argc, char* argv[]) {
     try {
-	initLogging ();
+        initLogging ();
 
-	WallpaperEngine::Application::ApplicationContext appContext (argc, argv);
+        WallpaperEngine::Application::ApplicationContext appContext (argc, argv);
 
-	appContext.loadSettingsFromArgv ();
+        appContext.loadSettingsFromArgv ();
 
-	app = new WallpaperEngine::Application::WallpaperApplication (appContext);
+        app = new WallpaperEngine::Application::WallpaperApplication (appContext);
 
-	// halt if the list-properties option was specified
-	if (appContext.settings.general.onlyListProperties) {
-	    delete app;
-	    return 0;
-	}
+        // halt if the list-properties option was specified
+        if (appContext.settings.general.onlyListProperties) {
+            delete app;
+            return 0;
+        }
 
-	// attach signals to gracefully stop
-	std::signal (SIGINT, signalhandler);
-	std::signal (SIGTERM, signalhandler);
+        // attach signals to gracefully stop
+        std::signal (SIGINT, signalhandler);
+        std::signal (SIGTERM, signalhandler);
 
-	// show the wallpaper application
-	app->show ();
+        // show the wallpaper application
+        app->show ();
 
-	// remove signal handlers before destroying app
-	std::signal (SIGINT, SIG_DFL);
-	std::signal (SIGTERM, SIG_DFL);
+        // remove signal handlers before destroying app
+        std::signal (SIGINT, SIG_DFL);
+        std::signal (SIGTERM, SIG_DFL);
 
-	delete app;
+        delete app;
 
-	return 0;
+        return 0;
     } catch (const std::exception& e) {
-	std::cerr << e.what () << std::endl;
-	return 1;
+        std::cerr << e.what () << std::endl;
+        return 1;
     }
 }

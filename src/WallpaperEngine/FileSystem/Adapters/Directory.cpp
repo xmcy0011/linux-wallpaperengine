@@ -2,6 +2,7 @@
 #include <fstream>
 #include <memory>
 
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 #include "Directory.h"
 
 #include "WallpaperEngine/Assets/AssetLoadException.h"
@@ -29,17 +30,17 @@ ReadStreamSharedPtr DirectoryAdapter::open (const std::filesystem::path& path) c
     auto finalpath = std::filesystem::canonical (this->basepath / path);
 
     if (!resolvedPathUnderBase (this->basepath, finalpath)) {
-	throw std::filesystem::filesystem_error ("Cannot find file", path, std::error_code ());
+	throw std::filesystem::filesystem_error ("Cannot find file", wstring2string (path), std::error_code ());
     }
 
     const auto status = std::filesystem::status (finalpath);
 
     if (!std::filesystem::exists (finalpath)) {
-	throw std::filesystem::filesystem_error ("Cannot find file", path, std::error_code ());
+	throw std::filesystem::filesystem_error ("Cannot find file", wstring2string (path), std::error_code ());
     }
 
     if (!std::filesystem::is_regular_file (status)) {
-	throw std::filesystem::filesystem_error ("Expected file but found a directory", path, std::error_code ());
+	throw std::filesystem::filesystem_error ("Expected file but found a directory", wstring2string (path), std::error_code ());
     }
 
     return std::make_shared<std::ifstream> (finalpath);
@@ -73,7 +74,7 @@ std::filesystem::path DirectoryAdapter::physicalPath (const std::filesystem::pat
     auto finalpath = std::filesystem::canonical (this->basepath / path);
 
     if (!resolvedPathUnderBase (this->basepath, finalpath)) {
-	throw std::filesystem::filesystem_error ("Cannot find file", path, std::error_code ());
+	throw std::filesystem::filesystem_error ("Cannot find file", wstring2string (path), std::error_code ());
     }
 
     return finalpath;
@@ -91,11 +92,11 @@ AdapterSharedPtr DirectoryFactory::create (const std::filesystem::path& path) co
     const auto status = std::filesystem::status (finalpath);
 
     if (!std::filesystem::exists (finalpath)) {
-	throw std::filesystem::filesystem_error ("Cannot find directory", path, std::error_code ());
+	throw std::filesystem::filesystem_error ("Cannot find directory", wstring2string (path), std::error_code ());
     }
 
     if (!std::filesystem::is_directory (status)) {
-	throw std::filesystem::filesystem_error ("Expected directory but found a file", path, std::error_code ());
+	throw std::filesystem::filesystem_error ("Expected directory but found a file", wstring2string (path), std::error_code ());
     }
 
     return std::make_unique<DirectoryAdapter> (finalpath);

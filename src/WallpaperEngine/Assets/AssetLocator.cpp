@@ -25,7 +25,7 @@ std::string AssetLocator::shader (const std::filesystem::path& filename) const {
 		    std::string contents = this->m_filesystem->readString (shader);
 
 		    sLog.out (
-			"Replaced ", pathToUtf8Generic (filename), " with compat ", pathToUtf8Generic (shader)
+			"Replaced ", wstring2string (filename), " with compat ", wstring2string (shader)
 		    );
 
 		    return contents;
@@ -74,9 +74,9 @@ std::string AssetLocator::readString (const std::filesystem::path& filename) con
 }
 
 ReadStreamSharedPtr AssetLocator::texture (const std::filesystem::path& filename) const {
-    std::string texKey = pathToUtf8Generic (filename);
+    std::string texKey = wstring2string (filename);
     texKey += ".tex";
-    const auto final = std::filesystem::path ("materials") / pathFromUtf8 (texKey);
+    const auto final = std::filesystem::path ("materials") / string2wstring (texKey);
 
     try {
 	return this->m_filesystem->read (final);

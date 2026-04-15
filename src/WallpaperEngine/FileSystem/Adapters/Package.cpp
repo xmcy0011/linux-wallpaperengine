@@ -14,14 +14,14 @@ using namespace WallpaperEngine::FileSystem;
 using namespace WallpaperEngine::FileSystem::Adapters;
 
 ReadStreamSharedPtr PackageAdapter::open (const std::filesystem::path& path) const {
-    const std::string pathKey = pathToUtf8Generic (path);
+    const std::string pathKey = wstring2string (path);
     // find the file entry
     const auto it = std::ranges::find_if (this->package->files, [&pathKey] (const auto& file) {
 	return file->filename == pathKey;
     });
 
     if (it == this->package->files.end ()) {
-	throw std::filesystem::filesystem_error ("Cannot find file", path, std::error_code ());
+	throw std::filesystem::filesystem_error ("Cannot find file", wstring2string (path), std::error_code ());
     }
 
     // read file into memory
@@ -36,7 +36,7 @@ ReadStreamSharedPtr PackageAdapter::open (const std::filesystem::path& path) con
 }
 
 bool PackageAdapter::exists (const std::filesystem::path& path) const {
-    const std::string pathKey = pathToUtf8Generic (path);
+    const std::string pathKey = wstring2string (path);
     for (const auto& file : this->package->files) {
 	if (file->filename == pathKey) {
 	    return true;
@@ -47,7 +47,7 @@ bool PackageAdapter::exists (const std::filesystem::path& path) const {
 }
 
 std::filesystem::path PackageAdapter::physicalPath (const std::filesystem::path& path) const {
-    throw std::filesystem::filesystem_error ("Package adapter does not support realpath", path, std::error_code ());
+    throw std::filesystem::filesystem_error ("Package adapter does not support realpath", wstring2string (path), std::error_code ());
 }
 
 bool PackageFactory::handlesMountpoint (const std::filesystem::path& path) const {

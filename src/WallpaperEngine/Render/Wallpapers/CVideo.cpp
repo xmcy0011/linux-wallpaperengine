@@ -6,7 +6,7 @@
 #include "WallpaperEngine/VideoPlayback/MPV/GLPlayer.h"
 
 using namespace WallpaperEngine;
-using WallpaperEngine::FileSystem::pathFromUtf8;
+using WallpaperEngine::FileSystem::string2wstring;
 using namespace WallpaperEngine::Render;
 using namespace WallpaperEngine::Render::Wallpapers;
 using namespace WallpaperEngine::VideoPlayback::MPV;
@@ -19,7 +19,7 @@ CVideo::CVideo (
     this->setupFramebuffers ();
 
     const std::filesystem::path videopath
-	= this->getVideo ().project.assetLocator->physicalPath (pathFromUtf8 (this->getVideo ().filename));
+	= this->getVideo ().project.assetLocator->physicalPath (string2wstring (this->getVideo ().filename));
 
     // create a player with a small framebuffer
     // this will be changed after mpv starts playback and sees the video resolution

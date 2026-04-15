@@ -581,6 +581,9 @@ endif()
 target_compile_definitions(linux-wallpaperengine-lib PUBLIC ERRORONLY=${ERRORONLY})
 target_compile_definitions(linux-wallpaperengine-lib PUBLIC DEMOMODE=${DEMOMODE})
 
+# windows 使用 unicode 多字符集
+target_compile_definitions(linux-wallpaperengine-lib PUBLIC "UNICODE" "_UNICODE")
+
 if (BUILD_TESTING)
     # tests should give as much output as possible
     target_compile_definitions(tests PRIVATE ERRORONLY=0)

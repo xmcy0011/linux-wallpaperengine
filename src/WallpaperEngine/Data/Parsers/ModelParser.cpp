@@ -8,10 +8,10 @@
 
 using namespace WallpaperEngine::Data::Parsers;
 using namespace WallpaperEngine::Data::Model;
-using WallpaperEngine::FileSystem::pathFromUtf8;
+using WallpaperEngine::FileSystem::string2wstring;
 
 ModelUniquePtr ModelParser::load (const Project& project, const std::string& filename) {
-    const auto model = JSON::parse (project.assetLocator->readString (pathFromUtf8 (filename)));
+    const auto model = JSON::parse (project.assetLocator->readString (string2wstring (filename)));
 
     return parse (model, project, filename);
 }

@@ -85,7 +85,7 @@ private:
      *
      * @param bg
      */
-    AssetLocatorUniquePtr setupAssetLocator (const std::string& bg) const;
+    AssetLocatorUniquePtr setupAssetLocator (const std::wstring& bg) const;
     /**
      * Loads projects based off the settings
      */
@@ -96,7 +96,7 @@ private:
      * @param bg
      * @return
      */
-    [[nodiscard]] ProjectUniquePtr loadBackground (const std::string& bg);
+    [[nodiscard]] ProjectUniquePtr loadBackground (const std::wstring& bg);
     /**
      * Prepares all background's values and updates their properties if required
      */
@@ -145,7 +145,7 @@ private:
 	const std::string& screen, ActivePlaylist& playlist, const std::chrono::steady_clock::time_point& now
     );
     bool selectNextCandidate (ActivePlaylist& playlist, std::size_t& outOrderIndex);
-    bool preflightWallpaper (const std::string& path);
+    bool preflightWallpaper (const std::wstring& path);
     std::vector<std::size_t> buildPlaylistOrder (const ApplicationContext::PlaylistDefinition& definition);
     bool makeAnyViewportCurrent () const;
 

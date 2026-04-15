@@ -3,24 +3,18 @@
 #include <filesystem>
 #include <string>
 #include <string_view>
+#include <codecvt>
 
 namespace WallpaperEngine::FileSystem {
 
-/// Interprets @p utf8 as a UTF-8 encoded path (JSON / project / CLI).
-inline std::filesystem::path pathFromUtf8 (const std::string& utf8) {
-    return std::filesystem::path (std::u8string_view (
-        reinterpret_cast<const char8_t*>(utf8.data ()), utf8.size ()));
+inline std::string wstring2string (const std::wstring& wstr) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    return converter.to_bytes(wstr);
 }
 
-inline std::filesystem::path pathFromUtf8 (std::string_view utf8) {
-    return std::filesystem::path (std::u8string_view (
-        reinterpret_cast<const char8_t*>(utf8.data ()), utf8.size ()));
-}
-
-/// UTF-8 logical key with '/' separators (matches .pkg entries and VFS keys).
-inline std::string pathToUtf8Generic (const std::filesystem::path& path) {
-    const std::u8string u8 = path.generic_u8string ();
-    return std::string (reinterpret_cast<const char*>(u8.data ()), u8.size ());
+inline std::wstring string2wstring (const std::string& str) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    return converter.from_bytes(str);
 }
 
 } // namespace WallpaperEngine::FileSystem

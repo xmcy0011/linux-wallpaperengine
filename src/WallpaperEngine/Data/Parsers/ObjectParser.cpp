@@ -14,7 +14,7 @@
 
 using namespace WallpaperEngine::Data::Parsers;
 using namespace WallpaperEngine::Data::Model;
-using WallpaperEngine::FileSystem::pathFromUtf8;
+using WallpaperEngine::FileSystem::string2wstring;
 
 ObjectUniquePtr ObjectParser::parse (const JSON& it, const Project& project) {
     const auto imageIt = it.find ("image");
@@ -51,7 +51,8 @@ ObjectUniquePtr ObjectParser::parse (const JSON& it, const Project& project) {
     }
 
     if (imageIt != it.end () && imageIt->is_string ()) {
-	return parseImage (it, project, std::move (basedata), *imageIt);
+        auto imageName = string2wstring (imageIt->get<std::string> ());
+        return parseImage (it, project, std::move (basedata), wstring2string (imageName));
     } else if (soundIt != it.end () && soundIt->is_array ()) {
 	return parseSound (it, std::move (basedata));
     } else if (particleIt != it.end ()) {
@@ -334,7 +335,7 @@ ParticleUniquePtr ObjectParser::parseParticle (const JSON& it, const Project& pr
 	if (!particleFile.empty ()) {
 	    try {
 		particleJson
-		    = WallpaperEngine::Data::JSON::JSON::parse (project.assetLocator->readString (pathFromUtf8 (particleFile)));
+		    = WallpaperEngine::Data::JSON::JSON::parse (project.assetLocator->readString (string2wstring (particleFile)));
 	    } catch (std::runtime_error& e) {
 		sLog.error ("Cannot load particle file: ", particleFile, " - ", e.what ());
 	    }
