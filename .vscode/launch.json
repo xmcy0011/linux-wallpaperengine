@@ -10,13 +10,12 @@
             "args": [
                 "--assets-dir",
                 "D:/Program Files (x86)/Steam/steamapps/common/wallpaper_engine/assets",
-                "D:/Program Files (x86)/Steam/steamapps/workshop/content/431960/2863707211",
+                "D:/Program Files (x86)/Steam/steamapps/workshop/content/431960/3484560439",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/output/Debug",
             "environment": [],
             "console": "integratedTerminal",
-            
         }
     ],
     "version": "2.0.0"

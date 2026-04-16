@@ -30,8 +30,9 @@ std::shared_ptr<const TextureProvider> TextureCache::resolve (const std::string&
 	    // Create metadata loader lambda that captures the assetLocator
 	    // so we need to construct the full path here
 	    auto metadataLoader = [&project] (const std::string& metaFilename) -> std::string {
+		// metaFilename is UTF-8; keep path operations in std::filesystem::path and convert explicitly when needed.
 		std::filesystem::path fullPath = std::filesystem::path ("materials") / string2wstring (metaFilename);
-		return project->assetLocator->readString (fullPath);
+		return project->assetLocator->readString (wstring2string (fullPath.wstring ()));
 	    };
 
 	    auto parsedTexture = TextureParser::parse (stream, filename, metadataLoader);

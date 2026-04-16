@@ -4,6 +4,7 @@
 #include "WallpaperEngine/Logging/Log.h"
 
 #include "WallpaperEngine/Data/Assets/Package.h"
+#include "WallpaperEngine/FileSystem/Utf8Path.h"
 
 #include <fstream>
 #include <memory>
@@ -11,16 +12,17 @@
 using namespace WallpaperEngine::Data::Parsers;
 using namespace WallpaperEngine::Data::Assets;
 using namespace WallpaperEngine::Data::Utils;
+using namespace WallpaperEngine::FileSystem;
 
 PackageUniquePtr PackageParser::parse (ReadStreamSharedPtr stream) {
     auto reader = std::make_unique<BinaryReader> (std::move (stream));
 
     if (const std::string header = reader->nextSizedString (); header.starts_with ("PKGV") == false) {
-	sLog.exception ("Expected header to start with PKGV, got ", header);
+        sLog.exception ("Expected header to start with PKGV, got ", header);
     }
 
     auto result = std::make_unique<Package> (Package {
-	.file = std::move (reader),
+        .file = std::move (reader),
     });
 
     result->files = parseFileList (*result->file);
@@ -36,10 +38,13 @@ FileEntryList PackageParser::parseFileList (const BinaryReader& stream) {
     result.reserve (filesCount);
 
     for (uint32_t i = 0; i < filesCount; i++) {
-	result.push_back (
-	    std::make_unique<FileEntry> (FileEntry {
-		.filename = stream.nextSizedString (), .offset = stream.nextUInt32 (), .length = stream.nextUInt32 () })
-	);
+        std::string filename
+            = wstring2string (std::filesystem::path (string2wstring (stream.nextSizedString ())).lexically_normal ());
+
+        result.push_back (
+            std::make_unique<FileEntry> (FileEntry {
+                .filename = filename, .offset = stream.nextUInt32 (), .length = stream.nextUInt32 () })
+        );
     }
 
     return result;

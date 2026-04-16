@@ -61,35 +61,37 @@ AdapterSharedPtr Container::mount (const std::filesystem::path& path, const std:
     }
 
     throw std::filesystem::filesystem_error (
-        "The specified mount cannot be handled by any of the filesystem adapters", wstring2string (path), std::error_code ()
+        "The specified mount cannot be handled by any of the filesystem adapters", path, std::error_code ()
     );
 }
 
 VirtualAdapter& Container::getVFS () const { return *this->m_vfs; }
 
 Adapter& Container::resolveAdapterForFile (const std::filesystem::path& path) const {
-    //    const auto normalized = normalize_path (path);
-    const auto normalized = path;
+    // const auto normalized = normalize_path (path);
+    const auto normalized = wstring2string (path);
 
     for (const auto& [root, adapter] : this->m_mountpoints) {
-        if (normalized.string ().starts_with (root.string ()) == false) {
+        std::string rootStr = wstring2string (root);
+        if (normalized.starts_with (rootStr) == false) {
             continue;
         }
 
-        if (const auto relative = normalized.string ().substr (root.string ().length ());
-            adapter->exists (relative) == false) {
+        const auto relative = normalized.substr (rootStr.length ());
+        if (adapter->exists (std::filesystem::path (string2wstring (relative))) == false) {
             continue;
         }
 
         return *adapter;
     }
 
-    if (normalized.string ().starts_with ("/") == false) {
+    if (normalized.starts_with ("/") == false) {
         // try resolving as absolute, just in case it's relative to the root
-        return this->resolveAdapterForFile ("/" + wstring2string (normalized));
+        std::string absoluteStr = "/" + wstring2string (std::filesystem::path (string2wstring (normalized)).lexically_normal ());
+        return this->resolveAdapterForFile (std::filesystem::path (string2wstring (absoluteStr)));
     }
 
     throw std::filesystem::filesystem_error (
-        "Cannot find requested file in any of the mountpoints", wstring2string (path), std::error_code ()
+        "Cannot find requested file in any of the mountpoints", path, std::error_code ()
     );
 }

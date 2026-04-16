@@ -8,10 +8,9 @@
 
 using namespace WallpaperEngine::Data::Parsers;
 using namespace WallpaperEngine::Data::Model;
-using WallpaperEngine::FileSystem::string2wstring;
 
 EffectUniquePtr EffectParser::load (const Project& project, const std::string& filename) {
-    const auto effectJson = JSON::parse (project.assetLocator->readString (string2wstring (filename)));
+    const auto effectJson = JSON::parse (project.assetLocator->readString (filename));
 
     return parse (effectJson, project);
 }

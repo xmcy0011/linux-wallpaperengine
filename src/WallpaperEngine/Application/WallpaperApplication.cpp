@@ -70,7 +70,7 @@ WallpaperApplication::WallpaperApplication (ApplicationContext& context) : m_con
     this->initializePlaylists ();
 }
 
-AssetLocatorUniquePtr WallpaperApplication::setupAssetLocator (const std::wstring& bg) const {
+AssetLocatorUniquePtr WallpaperApplication::setupAssetLocator (const std::filesystem::path& bg) const {
     auto container = std::make_unique<Container> ();
 
     const std::filesystem::path path = bg;
@@ -197,8 +197,8 @@ void WallpaperApplication::loadBackgrounds () {
     }
 }
 
-ProjectUniquePtr WallpaperApplication::loadBackground (const std::wstring& bg) {
-    auto container = this->setupAssetLocator (bg);
+ProjectUniquePtr WallpaperApplication::loadBackground (const std::filesystem::path& bg) {
+   auto container = this->setupAssetLocator (bg);
     auto json = WallpaperEngine::Data::JSON::JSON::parse (container->readString ("project.json"));
 
     // when a background is loaded, reset the screenshot variables
@@ -308,18 +308,18 @@ bool WallpaperApplication::makeAnyViewportCurrent () const {
     return true;
 }
 
-bool WallpaperApplication::preflightWallpaper (const std::wstring& path) {
+bool WallpaperApplication::preflightWallpaper (const std::filesystem::path& path) {
     try {
         // avoid mutating state, just ensure project.json parses
         auto container = this->setupAssetLocator (path);
         const auto json = WallpaperEngine::Data::JSON::JSON::parse (container->readString ("project.json"));
         if (!json.contains ("type") || !json.contains ("file")) {
-            sLog.error ("Preflight failed for ", wstring2string (path), ": missing required fields");
+            sLog.error ("Preflight failed for ", path, ": missing required fields");
             return false;
         }
         return true;
     } catch (const std::exception& e) {
-        sLog.error ("Preflight failed for ", wstring2string (path), ": ", e.what ());
+        sLog.error ("Preflight failed for ", path, ": ", e.what ());
         return false;
     }
 }

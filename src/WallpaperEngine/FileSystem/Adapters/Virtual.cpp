@@ -21,7 +21,7 @@ ReadStreamSharedPtr VirtualAdapter::open (const std::filesystem::path& path) con
 bool VirtualAdapter::exists (const std::filesystem::path& path) const { return this->files.contains (path); }
 
 std::filesystem::path VirtualAdapter::physicalPath (const std::filesystem::path& path) const {
-    throw std::filesystem::filesystem_error ("Virtual adapter does not support realpath", wstring2string (path), std::error_code ());
+    throw std::filesystem::filesystem_error ("Virtual adapter does not support realpath", path, std::error_code ());
 }
 
 void VirtualAdapter::add (const std::filesystem::path& path, const char* data) {
