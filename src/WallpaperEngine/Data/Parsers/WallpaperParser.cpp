@@ -11,14 +11,14 @@ using WallpaperEngine::FileSystem::string2wstring;
 
 WallpaperUniquePtr WallpaperParser::parse (const JSON& file, Project& project) {
     switch (project.type) {
-	case Project::Type_Scene:
-	    return parseScene (file, project);
-	case Project::Type_Video:
-	    return parseVideo (file, project);
-	case Project::Type_Web:
-	    return parseWeb (file, project);
-	default:
-	    sLog.exception ("Unexpected project type value found... This is likely a bug");
+        case Project::Type_Scene:
+            return parseScene (file, project);
+        case Project::Type_Video:
+            return parseVideo (file, project);
+        case Project::Type_Web:
+            return parseWeb (file, project);
+        default:
+            sLog.exception ("Unexpected project type value found... This is likely a bug");
     }
 }
 
@@ -27,7 +27,7 @@ SceneUniquePtr WallpaperParser::parseScene (const JSON& file, Project& project) 
     const auto camera = scene.require ("camera", "Scenes must have a camera section");
     const auto general = scene.require ("general", "Scenes must have a general section");
     const auto projection
-	= general.require ("orthogonalprojection", "General section must have orthogonal projection info");
+        = general.require ("orthogonalprojection", "General section must have orthogonal projection info");
     const auto objects = scene.require ("objects", "Scenes must have an objects section");
     const auto& properties = project.properties;
 
@@ -89,16 +89,16 @@ VideoUniquePtr WallpaperParser::parseVideo (const JSON& file, Project& project) 
 
 WebUniquePtr WallpaperParser::parseWeb (const JSON& file, Project& project) {
     return std::make_unique<Web> (WallpaperData {
-	.filename = file,
-	.project = project,
+        .filename = file,
+        .project = project,
     });
 }
 
-ObjectList WallpaperParser:: parseObjects (const JSON& objects, const Project& project) {
+ObjectList WallpaperParser::parseObjects (const JSON& objects, const Project& project) {
     ObjectList result = {};
 
     for (const auto& cur : objects) {
-	result.emplace_back (ObjectParser::parse (cur, project));
+        result.emplace_back (ObjectParser::parse (cur, project));
     }
 
     return result;

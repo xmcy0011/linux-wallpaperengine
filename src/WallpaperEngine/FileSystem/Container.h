@@ -53,7 +53,6 @@ public:
     VirtualAdapter& getVFS () const;
 
 private:
-
     /**
      * Searches for an adapter to handle the given file
      *

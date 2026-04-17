@@ -12,7 +12,7 @@ ReadStreamSharedPtr VirtualAdapter::open (const std::filesystem::path& path) con
     const auto file = this->files.find (path);
 
     if (file == this->files.end ()) {
-	throw std::filesystem::filesystem_error ("Cannot find file", path, std::error_code ());
+        throw std::filesystem::filesystem_error ("Cannot find file", path, std::error_code ());
     }
 
     return file->second;

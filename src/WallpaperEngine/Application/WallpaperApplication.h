@@ -34,15 +34,15 @@ public:
     /**
      * Prepares the application for rendering.
      */
-    void setup();
+    void setup ();
     /**
      * Renders a frame of the application.
      */
-    void render();
+    void render ();
     /**
      * Cleans up all the resources used by the application.
      */
-    static void cleanup();
+    static void cleanup ();
     /**
      * Shows the application until it's closed
      */
@@ -131,18 +131,18 @@ private:
     void takeScreenshot (const std::filesystem::path& filename) const;
 
     struct ActivePlaylist {
-	ApplicationContext::PlaylistDefinition definition;
-	std::vector<std::size_t> order;
-	std::size_t orderIndex = 0;
-	std::chrono::steady_clock::time_point nextSwitch;
-	std::chrono::steady_clock::time_point lastUpdate;
-	std::vector<std::size_t> failedIndices;
+        ApplicationContext::PlaylistDefinition definition;
+        std::vector<std::size_t> order;
+        std::size_t orderIndex = 0;
+        std::chrono::steady_clock::time_point nextSwitch;
+        std::chrono::steady_clock::time_point lastUpdate;
+        std::vector<std::size_t> failedIndices;
     };
 
     void initializePlaylists ();
     void updatePlaylists ();
     void advancePlaylist (
-	const std::string& screen, ActivePlaylist& playlist, const std::chrono::steady_clock::time_point& now
+        const std::string& screen, ActivePlaylist& playlist, const std::chrono::steady_clock::time_point& now
     );
     bool selectNextCandidate (ActivePlaylist& playlist, std::size_t& outOrderIndex);
     bool preflightWallpaper (const std::filesystem::path& path);

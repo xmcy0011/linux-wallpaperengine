@@ -19,15 +19,15 @@ ModelUniquePtr ModelParser::parse (const JSON& file, const Project& project, con
     const auto material = file.require<std::string> ("material", "Model must have a material");
 
     return std::make_unique<ModelStruct> (ModelStruct {
-	.filename = filename,
-	.material = MaterialParser::load (project, material),
-	.solidlayer = file.optional ("solidlayer", false),
-	.fullscreen = file.optional ("fullscreen", false),
-	.passthrough = file.optional ("passthrough", false),
-	.autosize = file.optional ("autosize", false),
-	.nopadding = file.optional ("nopadding", false),
-	.width = file.optional<int> ("width"),
-	.height = file.optional<int> ("height"),
-	.puppet = file.optional<std::string> ("puppet"),
+        .filename = filename,
+        .material = MaterialParser::load (project, material),
+        .solidlayer = file.optional ("solidlayer", false),
+        .fullscreen = file.optional ("fullscreen", false),
+        .passthrough = file.optional ("passthrough", false),
+        .autosize = file.optional ("autosize", false),
+        .nopadding = file.optional ("nopadding", false),
+        .width = file.optional<int> ("width"),
+        .height = file.optional<int> ("height"),
+        .puppet = file.optional<std::string> ("puppet"),
     });
 }

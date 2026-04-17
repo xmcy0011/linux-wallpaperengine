@@ -198,7 +198,7 @@ void WallpaperApplication::loadBackgrounds () {
 }
 
 ProjectUniquePtr WallpaperApplication::loadBackground (const std::filesystem::path& bg) {
-   auto container = this->setupAssetLocator (bg);
+    auto container = this->setupAssetLocator (bg);
     auto json = WallpaperEngine::Data::JSON::JSON::parse (container->readString ("project.json"));
 
     // when a background is loaded, reset the screenshot variables

@@ -29,5 +29,27 @@
         "-I${workspaceFolder}/src/External/quickjs",
         "-I${workspaceFolder}/src/External/SPIRV-Cross-WallpaperEngine",
         "-I${workspaceFolder}/src/External/stb"
-    ]
+    ],
+    "files.associations": {
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "csignal": "cpp",
+        "cstring": "cpp",
+        "iostream": "cpp",
+        "ctime": "cpp",
+        "thread": "cpp",
+        "vector": "cpp",
+        "algorithm": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "cmath": "cpp",
+        "cassert": "cpp",
+        "utility": "cpp",
+        "memory": "cpp",
+        "bit": "cpp",
+        "sstream": "cpp",
+        "map": "cpp",
+        "fstream": "cpp",
+        "filesystem": "cpp"
+    }
 }

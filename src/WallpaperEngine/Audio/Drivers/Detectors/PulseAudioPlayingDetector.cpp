@@ -8,24 +8,24 @@ void sinkInputInfoCallback (pa_context* context, const pa_sink_input_info* info,
     auto* detector = static_cast<PulseAudioPlayingDetector*> (userdata);
 
     if (info == nullptr) {
-	return;
+        return;
     }
 
     if (info->proplist == nullptr) {
-	return;
+        return;
     }
 
     // get processid
     const char* value = pa_proplist_gets (info->proplist, PA_PROP_APPLICATION_PROCESS_ID);
 
     if (value && strtol (value, nullptr, 10) != getpid () && pa_cvolume_avg (&info->volume) != PA_VOLUME_MUTED) {
-	detector->setIsPlaying (true);
+        detector->setIsPlaying (true);
     }
 }
 
 void defaultSinkInfoCallback (pa_context* context, const pa_server_info* info, void* userdata) {
     if (info == nullptr) {
-	return;
+        return;
     }
 
     pa_operation* op = pa_context_get_sink_input_info_list (context, sinkInputInfoCallback, userdata);
@@ -45,27 +45,27 @@ PulseAudioPlayingDetector::PulseAudioPlayingDetector (
 
     // lock until pulseaudio allows connection
     while (pa_context_get_state (this->m_context) != PA_CONTEXT_READY) {
-	pa_mainloop_iterate (this->m_mainloop, 1, nullptr);
+        pa_mainloop_iterate (this->m_mainloop, 1, nullptr);
     }
 }
 
 PulseAudioPlayingDetector::~PulseAudioPlayingDetector () {
     if (this->m_context) {
-	pa_context_disconnect (this->m_context);
-	pa_context_unref (this->m_context);
+        pa_context_disconnect (this->m_context);
+        pa_context_unref (this->m_context);
     }
 
     if (this->m_mainloop) {
-	pa_mainloop_free (this->m_mainloop);
+        pa_mainloop_free (this->m_mainloop);
     }
 }
 
 void PulseAudioPlayingDetector::update () {
     if (!this->getApplicationContext ().settings.audio.automute) {
-	return this->setIsPlaying (false);
+        return this->setIsPlaying (false);
     }
     if (this->getFullscreenDetector ().anythingFullscreen ()) {
-	return this->setIsPlaying (true);
+        return this->setIsPlaying (true);
     }
 
     // reset playing state
@@ -76,7 +76,7 @@ void PulseAudioPlayingDetector::update () {
 
     // wait until all the operations are done
     while (pa_operation_get_state (op) == PA_OPERATION_RUNNING) {
-	pa_mainloop_iterate (this->m_mainloop, 1, nullptr);
+        pa_mainloop_iterate (this->m_mainloop, 1, nullptr);
     }
 
     pa_operation_unref (op);

@@ -15,12 +15,12 @@ public:
      * Struct that contains all the required data for the PulseAudio callbacks
      */
     struct PulseAudioData {
-	kiss_fftr_cfg kisscfg;
-	uint8_t* audioBuffer;
-	uint8_t* audioBufferTmp;
-	size_t currentWritePointer;
-	bool fullFrameReady;
-	pa_stream* captureStream;
+        kiss_fftr_cfg kisscfg;
+        uint8_t* audioBuffer;
+        uint8_t* audioBufferTmp;
+        size_t currentWritePointer;
+        bool fullFrameReady;
+        pa_stream* captureStream;
     };
 
     PulseAudioPlaybackRecorder ();

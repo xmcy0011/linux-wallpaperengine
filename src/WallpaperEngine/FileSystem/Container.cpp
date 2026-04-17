@@ -87,7 +87,8 @@ Adapter& Container::resolveAdapterForFile (const std::filesystem::path& path) co
 
     if (normalized.starts_with ("/") == false) {
         // try resolving as absolute, just in case it's relative to the root
-        std::string absoluteStr = "/" + wstring2string (std::filesystem::path (string2wstring (normalized)).lexically_normal ());
+        std::string absoluteStr
+            = "/" + wstring2string (std::filesystem::path (string2wstring (normalized)).lexically_normal ());
         return this->resolveAdapterForFile (std::filesystem::path (string2wstring (absoluteStr)));
     }
 

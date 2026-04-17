@@ -32,24 +32,24 @@ public:
      * @return
      */
     static int preparseSize (const std::string& str) {
-	const char* p = str.c_str ();
-	const char* first = strchr (p, ' ');
-	const char* second = first ? strchr (first + 1, ' ') : nullptr;
-	const char* third = second ? strchr (second + 1, ' ') : nullptr;
+        const char* p = str.c_str ();
+        const char* first = strchr (p, ' ');
+        const char* second = first ? strchr (first + 1, ' ') : nullptr;
+        const char* third = second ? strchr (second + 1, ' ') : nullptr;
 
-	if (first == nullptr) {
-	    sLog.exception ("Invalid vector format: " + str + " (too few values, expected: 2, 3 or 4)");
-	}
+        if (first == nullptr) {
+            sLog.exception ("Invalid vector format: " + str + " (too few values, expected: 2, 3 or 4)");
+        }
 
-	if (second == nullptr) {
-	    return 2;
-	}
+        if (second == nullptr) {
+            return 2;
+        }
 
-	if (third == nullptr) {
-	    return 3;
-	}
+        if (third == nullptr) {
+            return 3;
+        }
 
-	return 4;
+        return 4;
     }
 
     /**
@@ -67,61 +67,61 @@ public:
      */
     template <int length, typename type, glm::qualifier qualifier>
     [[nodiscard]] static glm::vec<length, type, qualifier> parse (const std::string& str) {
-	// ensure a valid type is used, only 1 to 4 vectors are supported
-	static_assert (length >= 1 && length <= 4, "Invalid vector length");
+        // ensure a valid type is used, only 1 to 4 vectors are supported
+        static_assert (length >= 1 && length <= 4, "Invalid vector length");
 
-	const char* p = str.c_str ();
+        const char* p = str.c_str ();
 
-	// get up to 4 spaces
-	const char* first = strchr (p, ' ');
-	const char* second = first ? strchr (first + 1, ' ') : nullptr;
-	const char* third = second ? strchr (second + 1, ' ') : nullptr;
+        // get up to 4 spaces
+        const char* first = strchr (p, ' ');
+        const char* second = first ? strchr (first + 1, ' ') : nullptr;
+        const char* third = second ? strchr (second + 1, ' ') : nullptr;
 
-	// validate lengths against what was found in the strings
-	if constexpr (length == 1) {
-	    if (first != nullptr) {
-		sLog.exception ("Invalid vector format: " + str + " (too many values, expected: ", length, ")");
-	    }
-	} else if constexpr (length == 2) {
-	    if (first == nullptr) {
-		sLog.exception ("Invalid vector format: " + str + " (too few values, expected: ", length, ")");
-	    }
+        // validate lengths against what was found in the strings
+        if constexpr (length == 1) {
+            if (first != nullptr) {
+                sLog.exception ("Invalid vector format: " + str + " (too many values, expected: ", length, ")");
+            }
+        } else if constexpr (length == 2) {
+            if (first == nullptr) {
+                sLog.exception ("Invalid vector format: " + str + " (too few values, expected: ", length, ")");
+            }
 
-	    if (second != nullptr) {
-		sLog.exception ("Invalid vector format: " + str + " (too many values, expected: ", length, ")");
-	    }
-	} else if constexpr (length == 3) {
-	    if (first == nullptr || second == nullptr) {
-		sLog.exception ("Invalid vector format: " + str + " (too few values, expected: ", length, ")");
-	    }
-	    if (third != nullptr) {
-		sLog.exception ("Invalid vector format: " + str + " (too many values, expected: ", length, ")");
-	    }
-	} else if constexpr (length == 4) {
-	    if (first == nullptr || second == nullptr || third == nullptr) {
-		sLog.exception ("Invalid vector format: " + str + " (too few values, expected: ", length, ")");
-	    }
-	}
+            if (second != nullptr) {
+                sLog.exception ("Invalid vector format: " + str + " (too many values, expected: ", length, ")");
+            }
+        } else if constexpr (length == 3) {
+            if (first == nullptr || second == nullptr) {
+                sLog.exception ("Invalid vector format: " + str + " (too few values, expected: ", length, ")");
+            }
+            if (third != nullptr) {
+                sLog.exception ("Invalid vector format: " + str + " (too many values, expected: ", length, ")");
+            }
+        } else if constexpr (length == 4) {
+            if (first == nullptr || second == nullptr || third == nullptr) {
+                sLog.exception ("Invalid vector format: " + str + " (too few values, expected: ", length, ")");
+            }
+        }
 
-	// lengths validated, values can be used directly without issues
-	if constexpr (length == 1) {
-	    return { convert<type> (p) };
-	} else if constexpr (length == 2) {
-	    return { convert<type> (p), convert<type> (first + 1) };
-	} else if constexpr (length == 3) {
-	    return { convert<type> (p), convert<type> (first + 1), convert<type> (second + 1) };
-	} else if constexpr (length == 4) {
-	    return { convert<type> (p), convert<type> (first + 1), convert<type> (second + 1),
-		     convert<type> (third + 1) };
-	}
+        // lengths validated, values can be used directly without issues
+        if constexpr (length == 1) {
+            return { convert<type> (p) };
+        } else if constexpr (length == 2) {
+            return { convert<type> (p), convert<type> (first + 1) };
+        } else if constexpr (length == 3) {
+            return { convert<type> (p), convert<type> (first + 1), convert<type> (second + 1) };
+        } else if constexpr (length == 4) {
+            return { convert<type> (p), convert<type> (first + 1), convert<type> (second + 1),
+                     convert<type> (third + 1) };
+        }
     }
     template <typename T, typename std::enable_if_t<is_glm_vec<T>::value, int> = 0>
     [[nodiscard]] static T parse (const std::string& str) {
-	constexpr int length = GlmVecTraits<T>::length;
-	constexpr glm::qualifier qualifier = GlmVecTraits<T>::qualifier;
+        constexpr int length = GlmVecTraits<T>::length;
+        constexpr glm::qualifier qualifier = GlmVecTraits<T>::qualifier;
 
-	// call the specialized version of the function
-	return parse<length, typename GlmVecTraits<T>::type, qualifier> (str);
+        // call the specialized version of the function
+        return parse<length, typename GlmVecTraits<T>::type, qualifier> (str);
     }
 };
 

@@ -15,7 +15,8 @@ std::string AssetLocator::shader (const std::string& filename) const {
         std::filesystem::path shader = string2wstring (filename);
 
         // detect workshop shaders and check if there's a
-        if (auto it = shader.begin (); it != shader.end () && *it++ == std::filesystem::path (string2wstring ("workshop"))) {
+        if (auto it = shader.begin ();
+            it != shader.end () && *it++ == std::filesystem::path (string2wstring ("workshop"))) {
             if (it == shader.end ()) {
                 // Not enough segments: "workshop/<id>/<file>"
                 goto normalShader;
@@ -34,7 +35,7 @@ std::string AssetLocator::shader (const std::string& filename) const {
 
                 try {
                     shader = std::filesystem::path (string2wstring ("zcompat")) / "scene"
-                             / std::filesystem::path (string2wstring ("shaders")) / workshopId / shaderfile;
+                        / std::filesystem::path (string2wstring ("shaders")) / workshopId / shaderfile;
                     // replace the old path with the new one
                     std::string contents = this->m_filesystem->readString (shader);
 
@@ -46,7 +47,7 @@ std::string AssetLocator::shader (const std::string& filename) const {
             }
         }
 
-normalShader:
+    normalShader:
         std::filesystem::path final = std::filesystem::path (string2wstring ("shaders")) / shader;
         return this->m_filesystem->readString (final);
     } catch (std::filesystem::filesystem_error& base) {
@@ -74,7 +75,7 @@ std::string AssetLocator::includeShader (const std::string& filename) const {
 
 std::string AssetLocator::readString (const std::string& filename) const {
     try {
-        return this->m_filesystem->readString (std::filesystem::path(string2wstring(filename)));
+        return this->m_filesystem->readString (std::filesystem::path (string2wstring (filename)));
     } catch (std::filesystem::filesystem_error& base) {
         throw AssetLoadException (base);
     }
@@ -94,7 +95,7 @@ ReadStreamSharedPtr AssetLocator::texture (const std::string& filename) const {
 
 ReadStreamSharedPtr AssetLocator::read (const std::string& path) const {
     try {
-        return this->m_filesystem->read (std::filesystem::path(string2wstring(path)));
+        return this->m_filesystem->read (std::filesystem::path (string2wstring (path)));
     } catch (std::filesystem::filesystem_error& base) {
         throw AssetLoadException (base);
     }
@@ -102,7 +103,7 @@ ReadStreamSharedPtr AssetLocator::read (const std::string& path) const {
 
 std::filesystem::path AssetLocator::physicalPath (const std::string& path) const {
     try {
-        return this->m_filesystem->physicalPath (std::filesystem::path(string2wstring(path)));
+        return this->m_filesystem->physicalPath (std::filesystem::path (string2wstring (path)));
     } catch (std::filesystem::filesystem_error& base) {
         throw AssetLoadException (base);
     }

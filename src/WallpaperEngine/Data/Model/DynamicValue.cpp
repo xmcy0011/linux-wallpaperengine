@@ -23,7 +23,7 @@ DynamicValue::DynamicValue (bool value) { this->DynamicValue::update (value); }
 
 DynamicValue::~DynamicValue () {
     if (this->m_aliveFlag) {
-	*this->m_aliveFlag = false;
+        *this->m_aliveFlag = false;
     }
     this->disconnect ();
     this->m_listeners.clear ();
@@ -53,32 +53,32 @@ DynamicValue::UnderlyingType DynamicValue::getType () const { return this->m_typ
 
 std::string DynamicValue::toString () const {
     switch (this->m_type) {
-	case UnderlyingType::Float:
-	    return std::to_string (this->m_float);
-	case UnderlyingType::Int:
-	    return std::to_string (this->m_int);
-	case UnderlyingType::Boolean:
-	    return std::to_string (this->m_bool);
-	case UnderlyingType::Vec2:
-	    return std::to_string (this->m_vec2.x) + ", " + std::to_string (this->m_vec2.y);
-	case UnderlyingType::Vec3:
-	    return std::to_string (this->m_vec3.x) + ", " + std::to_string (this->m_vec3.y) + ", "
-		+ std::to_string (this->m_vec3.z);
-	case UnderlyingType::Vec4:
-	    return std::to_string (this->m_vec4.x) + ", " + std::to_string (this->m_vec4.y) + ", "
-		+ std::to_string (this->m_vec4.z) + ", " + std::to_string (this->m_vec4.w);
-	case UnderlyingType::IVec2:
-	    return std::to_string (this->m_ivec2.x) + ", " + std::to_string (this->m_ivec2.y);
-	case UnderlyingType::IVec3:
-	    return std::to_string (this->m_ivec3.x) + ", " + std::to_string (this->m_ivec3.y) + ", "
-		+ std::to_string (this->m_ivec3.z);
-	case UnderlyingType::IVec4:
-	    return std::to_string (this->m_ivec4.x) + ", " + std::to_string (this->m_ivec4.y) + ", "
-		+ std::to_string (this->m_ivec4.z) + ", " + std::to_string (this->m_ivec4.w);
-	case UnderlyingType::String:
-	    return this->m_string;
-	default:
-	    return "Unknown conversion for dynamic value of type: " + std::to_string (static_cast<int> (this->m_type));
+        case UnderlyingType::Float:
+            return std::to_string (this->m_float);
+        case UnderlyingType::Int:
+            return std::to_string (this->m_int);
+        case UnderlyingType::Boolean:
+            return std::to_string (this->m_bool);
+        case UnderlyingType::Vec2:
+            return std::to_string (this->m_vec2.x) + ", " + std::to_string (this->m_vec2.y);
+        case UnderlyingType::Vec3:
+            return std::to_string (this->m_vec3.x) + ", " + std::to_string (this->m_vec3.y) + ", "
+                + std::to_string (this->m_vec3.z);
+        case UnderlyingType::Vec4:
+            return std::to_string (this->m_vec4.x) + ", " + std::to_string (this->m_vec4.y) + ", "
+                + std::to_string (this->m_vec4.z) + ", " + std::to_string (this->m_vec4.w);
+        case UnderlyingType::IVec2:
+            return std::to_string (this->m_ivec2.x) + ", " + std::to_string (this->m_ivec2.y);
+        case UnderlyingType::IVec3:
+            return std::to_string (this->m_ivec3.x) + ", " + std::to_string (this->m_ivec3.y) + ", "
+                + std::to_string (this->m_ivec3.z);
+        case UnderlyingType::IVec4:
+            return std::to_string (this->m_ivec4.x) + ", " + std::to_string (this->m_ivec4.y) + ", "
+                + std::to_string (this->m_ivec4.z) + ", " + std::to_string (this->m_ivec4.w);
+        case UnderlyingType::String:
+            return this->m_string;
+        default:
+            return "Unknown conversion for dynamic value of type: " + std::to_string (static_cast<int> (this->m_type));
     }
 }
 
@@ -240,7 +240,7 @@ void DynamicValue::update (const std::string& newValue) {
     this->m_type = UnderlyingType::String;
 
     if (this->m_condition.has_value ()) {
-	this->m_bool = this->m_condition.value ().condition == newValue;
+        this->m_bool = this->m_condition.value ().condition == newValue;
     }
 
     this->propagate ();
@@ -259,8 +259,8 @@ void DynamicValue::update (const DynamicValue& other) {
     this->m_type = other.getType ();
 
     if (this->m_condition.has_value () && other.getType () == UnderlyingType::String) {
-	// TODO: DOES THIS NEED TO HAPPEN WITH OTHER TYPES TOO?
-	this->m_bool = this->m_condition.value ().condition == other.getString ();
+        // TODO: DOES THIS NEED TO HAPPEN WITH OTHER TYPES TOO?
+        this->m_bool = this->m_condition.value ().condition == other.getString ();
     }
 
     this->propagate ();
@@ -286,22 +286,22 @@ std::function<void ()> DynamicValue::listen (const std::function<void (const Dyn
     auto alive = this->m_aliveFlag;
 
     return [this, it, alive] {
-	if (!alive || !*alive) {
-	    return;
-	}
-	this->m_listeners.erase (it);
+        if (!alive || !*alive) {
+            return;
+        }
+        this->m_listeners.erase (it);
     };
 }
 
 void DynamicValue::connect (DynamicValue* other) {
     const auto lambda = [this] (const DynamicValue& other) {
-	// null is a special case, copying everything to 0 is different,
-	// so calling the update without parameters is required
-	if (other.getType () == UnderlyingType::Null) {
-	    this->update ();
-	} else {
-	    this->update (other);
-	}
+        // null is a special case, copying everything to 0 is different,
+        // so calling the update without parameters is required
+        if (other.getType () == UnderlyingType::Null) {
+            this->update ();
+        } else {
+            this->update (other);
+        }
     };
 
     const auto deregisterFunction = other->listen (lambda);
@@ -314,14 +314,14 @@ void DynamicValue::connect (DynamicValue* other) {
 
 void DynamicValue::disconnect () {
     for (const auto& deregister : this->m_connections) {
-	if (!deregister) {
-	    continue;
-	}
-	try {
-	    deregister ();
-	} catch (...) {
-	    sLog.error ("Exception during listener deregistration");
-	}
+        if (!deregister) {
+            continue;
+        }
+        try {
+            deregister ();
+        } catch (...) {
+            sLog.error ("Exception during listener deregistration");
+        }
     }
 
     this->m_connections.clear ();
@@ -331,6 +331,6 @@ void DynamicValue::attachCondition (const ConditionInfo& condition) { this->m_co
 
 void DynamicValue::propagate () const {
     for (const auto& callback : this->m_listeners) {
-	callback (*this);
+        callback (*this);
     }
 }

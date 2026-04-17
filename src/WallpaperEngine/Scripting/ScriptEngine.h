@@ -31,9 +31,8 @@ public:
      * @return The modified value from update(), or a copy of currentValue on error
      */
     DynamicValueUniquePtr evaluate (
-	const std::string& scriptSource,
-	const std::map<std::string, DynamicValue*>& scriptProperties,
-	const DynamicValue& currentValue
+        const std::string& scriptSource, const std::map<std::string, DynamicValue*>& scriptProperties,
+        const DynamicValue& currentValue
     );
 
 private:

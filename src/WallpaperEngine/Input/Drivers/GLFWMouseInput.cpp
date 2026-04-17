@@ -9,8 +9,8 @@ GLFWMouseInput::GLFWMouseInput (const Render::Drivers::GLFWOpenGLDriver& driver)
 
 void GLFWMouseInput::update () {
     if (!this->m_driver.getApp ().getContext ().settings.mouse.enabled) {
-	this->m_reportedPosition = { 0, 0 };
-	return;
+        this->m_reportedPosition = { 0, 0 };
+        return;
     }
 
     const int leftClickState = glfwGetMouseButton (this->m_driver.getWindow (), GLFW_MOUSE_BUTTON_LEFT);

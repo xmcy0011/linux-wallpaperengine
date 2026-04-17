@@ -9,16 +9,16 @@ namespace WallpaperEngine::Application {
 class ApplicationState {
 public:
     struct {
-	bool keepRunning;
+        bool keepRunning;
     } general {};
 
     struct {
-	bool enabled;
-	int volume;
+        bool enabled;
+        int volume;
     } audio {};
 
     struct {
-	bool enabled;
+        bool enabled;
     } mouse {};
 };
 } // namespace WallpaperEngine::Application

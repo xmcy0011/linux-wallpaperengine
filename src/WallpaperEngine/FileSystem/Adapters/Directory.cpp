@@ -40,9 +40,7 @@ ReadStreamSharedPtr DirectoryAdapter::open (const std::filesystem::path& path) c
     }
 
     if (!std::filesystem::is_regular_file (status)) {
-        throw std::filesystem::filesystem_error (
-            "Expected file but found a directory", path, std::error_code ()
-        );
+        throw std::filesystem::filesystem_error ("Expected file but found a directory", path, std::error_code ());
     }
 
     return std::make_shared<std::ifstream> (finalpath);
@@ -98,9 +96,7 @@ AdapterSharedPtr DirectoryFactory::create (const std::filesystem::path& path) co
     }
 
     if (!std::filesystem::is_directory (status)) {
-        throw std::filesystem::filesystem_error (
-            "Expected directory but found a file", path, std::error_code ()
-        );
+        throw std::filesystem::filesystem_error ("Expected directory but found a file", path, std::error_code ());
     }
 
     return std::make_unique<DirectoryAdapter> (finalpath);

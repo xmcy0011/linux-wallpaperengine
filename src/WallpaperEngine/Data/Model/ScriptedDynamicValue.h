@@ -18,9 +18,7 @@ namespace WallpaperEngine::Data::Model {
 class ScriptedDynamicValue : public DynamicValue {
 public:
     ScriptedDynamicValue (
-	std::string scriptSource,
-	std::map<std::string, DynamicValueUniquePtr> scriptProps,
-	DynamicValue baseValue
+        std::string scriptSource, std::map<std::string, DynamicValueUniquePtr> scriptProps, DynamicValue baseValue
     );
 
     ~ScriptedDynamicValue () override = default;

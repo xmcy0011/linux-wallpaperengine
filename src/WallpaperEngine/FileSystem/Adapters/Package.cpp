@@ -14,7 +14,7 @@ using namespace WallpaperEngine::FileSystem;
 using namespace WallpaperEngine::FileSystem::Adapters;
 
 ReadStreamSharedPtr PackageAdapter::open (const std::filesystem::path& path) const {
-    const std::string pathKey = wstring2string (path.lexically_normal());
+    const std::string pathKey = wstring2string (path.lexically_normal ());
     // find the file entry
     const auto it = std::ranges::find_if (this->package->files, [&pathKey] (const auto& file) {
         return file->filename == pathKey;
@@ -47,9 +47,7 @@ bool PackageAdapter::exists (const std::filesystem::path& path) const {
 }
 
 std::filesystem::path PackageAdapter::physicalPath (const std::filesystem::path& path) const {
-    throw std::filesystem::filesystem_error (
-        "Package adapter does not support realpath", path, std::error_code ()
-    );
+    throw std::filesystem::filesystem_error ("Package adapter does not support realpath", path, std::error_code ());
 }
 
 bool PackageFactory::handlesMountpoint (const std::filesystem::path& path) const {

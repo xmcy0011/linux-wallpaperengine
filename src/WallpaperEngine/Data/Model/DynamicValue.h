@@ -19,17 +19,17 @@ struct ConditionInfo {
 class DynamicValue {
 public:
     enum UnderlyingType {
-	Null = 0,
-	IVec4 = 1,
-	IVec3 = 2,
-	IVec2 = 3,
-	Vec4 = 4,
-	Vec3 = 5,
-	Vec2 = 6,
-	Float = 7,
-	Int = 8,
-	Boolean = 9,
-	String = 10
+        Null = 0,
+        IVec4 = 1,
+        IVec3 = 2,
+        IVec2 = 3,
+        Vec4 = 4,
+        Vec3 = 5,
+        Vec2 = 6,
+        Float = 7,
+        Int = 8,
+        Boolean = 9,
+        String = 10
     };
 
     DynamicValue () = default;
