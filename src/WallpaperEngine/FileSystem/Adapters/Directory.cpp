@@ -43,7 +43,8 @@ ReadStreamSharedPtr DirectoryAdapter::open (const std::filesystem::path& path) c
         throw std::filesystem::filesystem_error ("Expected file but found a directory", path, std::error_code ());
     }
 
-    return std::make_shared<std::ifstream> (finalpath);
+    // Windows defaults ifstream to text mode; binary assets (.tex, etc.) must not undergo CRLF translation.
+    return std::make_shared<std::ifstream> (finalpath, std::ios::binary);
 }
 
 bool DirectoryAdapter::exists (const std::filesystem::path& path) const {
