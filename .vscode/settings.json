@@ -3,7 +3,7 @@
     "cmake.configureSettings": {
         "CMAKE_TOOLCHAIN_FILE": "E:/repo/github/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "ENABLE_MPV": "OFF",
+        // "ENABLE_MPV": "OFF",
         "ENABLE_PULSEAUDIO": "OFF",
         "CMAKE_BUILD_TYPE": "Debug",
         "-DUNICODE": "ON"
