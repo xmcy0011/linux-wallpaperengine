@@ -19,7 +19,7 @@ GLFWOpenGLDriver::GLFWOpenGLDriver (const char* windowTitle, ApplicationContext&
 
     // initialize glfw
     if (glfwInit () == GLFW_FALSE) {
-	sLog.exception ("Failed to initialize glfw");
+        sLog.exception ("Failed to initialize glfw");
     }
 
     // set some window hints (opengl version to be used)
@@ -35,9 +35,9 @@ GLFWOpenGLDriver::GLFWOpenGLDriver (const char* windowTitle, ApplicationContext&
 
     // for forced window mode, we can set some hints that'll help position the window
     if (context.settings.render.mode == Application::ApplicationContext::EXPLICIT_WINDOW) {
-	glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE);
-	glfwWindowHint (GLFW_DECORATED, GLFW_FALSE);
-	glfwWindowHint (GLFW_FLOATING, GLFW_TRUE);
+        glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE);
+        glfwWindowHint (GLFW_DECORATED, GLFW_FALSE);
+        glfwWindowHint (GLFW_FLOATING, GLFW_TRUE);
     }
 
 #if !NDEBUG
@@ -45,10 +45,10 @@ GLFWOpenGLDriver::GLFWOpenGLDriver (const char* windowTitle, ApplicationContext&
 #endif /* DEBUG */
 
     // create window, size doesn't matter as long as we don't show it
-    this->m_window = glfwCreateWindow (640, 480, windowTitle, nullptr, nullptr);
+    this->m_window = glfwCreateWindow (1280, 1080, windowTitle, nullptr, nullptr);
 
     if (this->m_window == nullptr) {
-	sLog.exception ("Cannot create window");
+        sLog.exception ("Cannot create window");
     }
 
     // make context current, required for glew initialization
@@ -56,21 +56,21 @@ GLFWOpenGLDriver::GLFWOpenGLDriver (const char* windowTitle, ApplicationContext&
 
     // initialize glew for rendering
     if (const GLenum result = glewInit (); result != GLEW_OK) {
-	sLog.error ("Failed to initialize GLEW: ", glewGetErrorString (result));
+        sLog.error ("Failed to initialize GLEW: ", glewGetErrorString (result));
     }
 
     // setup output
     if (context.settings.render.mode == ApplicationContext::EXPLICIT_WINDOW
-	|| context.settings.render.mode == ApplicationContext::NORMAL_WINDOW) {
-	m_output = new WallpaperEngine::Render::Drivers::Output::GLFWWindowOutput (context, *this);
+        || context.settings.render.mode == ApplicationContext::NORMAL_WINDOW) {
+        m_output = new WallpaperEngine::Render::Drivers::Output::GLFWWindowOutput (context, *this);
     }
 #ifdef ENABLE_X11
     else {
-	m_output = new WallpaperEngine::Render::Drivers::Output::X11Output (context, *this);
+        m_output = new WallpaperEngine::Render::Drivers::Output::X11Output (context, *this);
     }
 #else
     else {
-	sLog.exception ("Trying to start GLFW in background mode without X11 support installed. Bailing out");
+        sLog.exception ("Trying to start GLFW in background mode without X11 support installed. Bailing out");
     }
 #endif
 }
@@ -112,30 +112,30 @@ void GLFWOpenGLDriver::dispatchEventQueue () {
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (const auto& [screen, viewport] : this->m_output->getViewports ()) {
-	this->getApp ().update (viewport);
+        this->getApp ().update (viewport);
     }
 
     // read the full texture into the image
     if (this->m_output->haveImageBuffer ()) {
-	// 4.5 supports glReadnPixels, anything older doesn't...
-	if (GLEW_VERSION_4_5) {
-	    glReadnPixels (
-		0, 0, this->m_output->getFullWidth (), this->m_output->getFullHeight (), GL_BGRA, GL_UNSIGNED_BYTE,
-		this->m_output->getImageBufferSize (), this->m_output->getImageBuffer ()
-	    );
-	} else {
-	    // fallback to old version
-	    glReadPixels (
-		0, 0, this->m_output->getFullWidth (), this->m_output->getFullHeight (), GL_BGRA, GL_UNSIGNED_BYTE,
-		this->m_output->getImageBuffer ()
-	    );
-	}
+        // 4.5 supports glReadnPixels, anything older doesn't...
+        if (GLEW_VERSION_4_5) {
+            glReadnPixels (
+                0, 0, this->m_output->getFullWidth (), this->m_output->getFullHeight (), GL_BGRA, GL_UNSIGNED_BYTE,
+                this->m_output->getImageBufferSize (), this->m_output->getImageBuffer ()
+            );
+        } else {
+            // fallback to old version
+            glReadPixels (
+                0, 0, this->m_output->getFullWidth (), this->m_output->getFullHeight (), GL_BGRA, GL_UNSIGNED_BYTE,
+                this->m_output->getImageBuffer ()
+            );
+        }
 
-	GLenum error = glGetError ();
+        GLenum error = glGetError ();
 
-	if (error != GL_NO_ERROR) {
-	    sLog.exception ("OpenGL error when reading texture ", error);
-	}
+        if (error != GL_NO_ERROR) {
+            sLog.exception ("OpenGL error when reading texture ", error);
+        }
     }
 
     // TODO: FRAMETIME CONTROL SHOULD GO BACK TO THE CWALLPAPAERAPPLICATION ONCE ACTUAL PARTICLES ARE IMPLEMENTED
@@ -168,22 +168,22 @@ GLFWwindow* GLFWOpenGLDriver::getWindow () const { return this->m_window; }
 
 static void registerGLFWOpenGLDriver () {
     sVideoFactories.registerDriver (
-	ApplicationContext::DESKTOP_BACKGROUND, "x11",
-	[] (ApplicationContext& context, WallpaperApplication& application) -> std::unique_ptr<VideoDriver> {
-	    return std::make_unique<GLFWOpenGLDriver> ("wallpaperengine", context, application);
-	}
+        ApplicationContext::DESKTOP_BACKGROUND, "x11",
+        [] (ApplicationContext& context, WallpaperApplication& application) -> std::unique_ptr<VideoDriver> {
+            return std::make_unique<GLFWOpenGLDriver> ("wallpaperengine", context, application);
+        }
     );
     sVideoFactories.registerDriver (
-	ApplicationContext::EXPLICIT_WINDOW, DEFAULT_WINDOW_NAME,
-	[] (ApplicationContext& context, WallpaperApplication& application) -> std::unique_ptr<VideoDriver> {
-	    return std::make_unique<GLFWOpenGLDriver> ("wallpaperengine", context, application);
-	}
+        ApplicationContext::EXPLICIT_WINDOW, DEFAULT_WINDOW_NAME,
+        [] (ApplicationContext& context, WallpaperApplication& application) -> std::unique_ptr<VideoDriver> {
+            return std::make_unique<GLFWOpenGLDriver> ("wallpaperengine", context, application);
+        }
     );
     sVideoFactories.registerDriver (
-	ApplicationContext::NORMAL_WINDOW, DEFAULT_WINDOW_NAME,
-	[] (ApplicationContext& context, WallpaperApplication& application) -> std::unique_ptr<VideoDriver> {
-	    return std::make_unique<GLFWOpenGLDriver> ("wallpaperengine", context, application);
-	}
+        ApplicationContext::NORMAL_WINDOW, DEFAULT_WINDOW_NAME,
+        [] (ApplicationContext& context, WallpaperApplication& application) -> std::unique_ptr<VideoDriver> {
+            return std::make_unique<GLFWOpenGLDriver> ("wallpaperengine", context, application);
+        }
     );
 }
 

@@ -14,7 +14,6 @@
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/output/Debug",
-            "environment": [],
             "console": "integratedTerminal",
         }
     ],

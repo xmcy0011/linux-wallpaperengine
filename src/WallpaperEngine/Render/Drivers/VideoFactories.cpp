@@ -10,7 +10,7 @@ VideoFactories::VideoFactories () { assert (this->sInstance == nullptr); }
 
 VideoFactories& VideoFactories::get () {
     if (sInstance == nullptr) {
-	sInstance = std::make_unique<VideoFactories> ();
+        sInstance = std::make_unique<VideoFactories> ();
     }
 
     return *sInstance;
@@ -23,12 +23,12 @@ void VideoFactories::registerDriver (
     const auto cur = this->m_driverFactories.find (forMode);
 
     if (cur == this->m_driverFactories.end ()) {
-	SessionTypeToFactoryType map;
+        SessionTypeToFactoryType map;
 
-	map.emplace (xdgSessionType, factory);
-	this->m_driverFactories.emplace (forMode, map);
+        map.emplace (xdgSessionType, factory);
+        this->m_driverFactories.emplace (forMode, map);
     } else {
-	cur->second.emplace (xdgSessionType, factory);
+        cur->second.emplace (xdgSessionType, factory);
     }
 }
 
@@ -42,9 +42,9 @@ std::vector<std::string> VideoFactories::getRegisteredDrivers () const {
     std::vector<std::string> result;
 
     for (const auto& sessionTypeToFactory : this->m_driverFactories | std::views::values) {
-	for (const auto& xdgSessionType : sessionTypeToFactory | std::views::keys) {
-	    result.push_back (xdgSessionType);
-	}
+        for (const auto& xdgSessionType : sessionTypeToFactory | std::views::keys) {
+            result.push_back (xdgSessionType);
+        }
     }
 
     const auto last = std::ranges::unique (result).begin ();
@@ -61,18 +61,18 @@ std::unique_ptr<VideoDriver> VideoFactories::createVideoDriver (
     const auto sessionTypeToFactory = this->m_driverFactories.find (mode);
 
     if (sessionTypeToFactory == this->m_driverFactories.end ()) {
-	sLog.exception ("Cannot find a driver for window mode ", mode, " and XDG_SESSION_TYPE ", xdgSessionType);
+        sLog.exception ("Cannot find a driver for window mode ", mode, " and XDG_SESSION_TYPE ", xdgSessionType);
     }
 
     // windows are a bit special, there's just one handler
     // and it's not like the current map properly allows for storing this
     // so hijacking the detection is probably best for now
     const auto factory = mode != Application::ApplicationContext::DESKTOP_BACKGROUND
-	? sessionTypeToFactory->second.find (DEFAULT_WINDOW_NAME)
-	: sessionTypeToFactory->second.find (xdgSessionType);
+        ? sessionTypeToFactory->second.find (DEFAULT_WINDOW_NAME)
+        : sessionTypeToFactory->second.find (xdgSessionType);
 
     if (factory == sessionTypeToFactory->second.end ()) {
-	sLog.exception ("Cannot find a driver for window mode ", mode, " and XDG_SESSION_TYPE ", xdgSessionType);
+        sLog.exception ("Cannot find a driver for window mode ", mode, " and XDG_SESSION_TYPE ", xdgSessionType);
     }
 
     return factory->second (context, application);
@@ -84,7 +84,7 @@ std::unique_ptr<Detectors::FullScreenDetector> VideoFactories::createFullscreenD
     const auto it = this->m_fullscreenFactories.find (xdgSessionType);
 
     if (it == this->m_fullscreenFactories.end () || !context.settings.render.pauseOnFullscreen) {
-	return std::make_unique<Detectors::FullScreenDetector> (context);
+        return std::make_unique<Detectors::FullScreenDetector> (context);
     }
 
     return it->second (context, driver);

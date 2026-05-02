@@ -30,13 +30,13 @@ static std::filesystem::path detectHomepath () {
     char* home = getenv ("HOME");
 
     if (home == nullptr) {
-	sLog.exception ("Cannot find home directory for the current user");
+        sLog.exception ("Cannot find home directory for the current user");
     }
 
     const std::filesystem::path path = home;
 
     if (!std::filesystem::is_directory (path)) {
-	sLog.exception ("Cannot find home directory for current user, ", home, " is not a directory");
+        sLog.exception ("Cannot find home directory for current user, ", home, " is not a directory");
     }
 
     return path;
@@ -50,8 +50,8 @@ static std::optional<std::filesystem::path> g_windowsAssetsDir;
 
 void Steam::FileSystem::setWindowsAssetRoot (const std::filesystem::path& assetsDirOrInstallRoot) {
     if (assetsDirOrInstallRoot.empty ()) {
-	g_windowsAssetsDir.reset ();
-	return;
+        g_windowsAssetsDir.reset ();
+        return;
     }
     std::error_code ec;
     const auto c = std::filesystem::weakly_canonical (assetsDirOrInstallRoot, ec);
@@ -61,31 +61,33 @@ void Steam::FileSystem::setWindowsAssetRoot (const std::filesystem::path& assets
 /** Directory that contains the "assets" subfolder (…/wallpaper_engine), or the path passed as install root. */
 static std::filesystem::path wallpaperEngineInstallRoot () {
     if (!g_windowsAssetsDir.has_value () || g_windowsAssetsDir->empty ()) {
-	return {};
+        return {};
     }
     const auto& p = *g_windowsAssetsDir;
     if (std::filesystem::is_directory (p / "assets")) {
-	return p.lexically_normal ();
+        return p.lexically_normal ();
     }
     if (p.filename () == "assets" && std::filesystem::is_directory (p)) {
-	return p.parent_path ().lexically_normal ();
+        return p.parent_path ().lexically_normal ();
     }
     return p.lexically_normal ();
 }
 
 static void push_unique_root (std::vector<std::filesystem::path>& roots, const std::filesystem::path& p) {
-    if (p.empty ())
-	    return;
+    if (p.empty ()) {
+        return;
+    }
     const auto n = p.lexically_normal ();
-    if (std::find (roots.begin (), roots.end (), n) != roots.end ())
-	    return;
+    if (std::find (roots.begin (), roots.end (), n) != roots.end ()) {
+        return;
+    }
     roots.push_back (n);
 }
 
 /** Typical Steam install roots on Windows (steamapps lives under these). */
 static std::vector<std::filesystem::path> steamRootsWindows () {
     std::vector<std::filesystem::path> roots;
-	push_unique_root (roots, "D:/Program Files (x86)/Steam");
+    push_unique_root (roots, "D:/Program Files (x86)/Steam");
     return roots;
 }
 #endif
@@ -103,14 +105,13 @@ std::filesystem::path Steam::FileSystem::workshopDirectory (int appID, const std
     }
 
     for (const auto& root : steamRootsWindows ()) {
-	const auto currentpath
-	    = root / "steamapps" / "workshop" / "content" / std::to_string (appID) / contentID;
+        const auto currentpath = root / "steamapps" / "workshop" / "content" / std::to_string (appID) / contentID;
 
-	if (!std::filesystem::exists (currentpath) || !std::filesystem::is_directory (currentpath)) {
-	    continue;
-	}
+        if (!std::filesystem::exists (currentpath) || !std::filesystem::is_directory (currentpath)) {
+            continue;
+        }
 
-	return currentpath;
+        return currentpath;
     }
 
     sLog.exception ("Cannot find workshop directory for steam app ", appID, " and content ", contentID);
@@ -118,13 +119,13 @@ std::filesystem::path Steam::FileSystem::workshopDirectory (int appID, const std
     auto homepath = detectHomepath ();
 
     for (const auto& current : workshopDirectoryPaths) {
-	auto currentpath = std::filesystem::path (homepath) / current / std::to_string (appID) / contentID;
+        auto currentpath = std::filesystem::path (homepath) / current / std::to_string (appID) / contentID;
 
-	if (!std::filesystem::exists (currentpath) || !std::filesystem::is_directory (currentpath)) {
-	    continue;
-	}
+        if (!std::filesystem::exists (currentpath) || !std::filesystem::is_directory (currentpath)) {
+            continue;
+        }
 
-	return currentpath;
+        return currentpath;
     }
 
     sLog.exception ("Cannot find workshop directory for steam app ", appID, " and content ", contentID);
@@ -142,13 +143,13 @@ std::filesystem::path Steam::FileSystem::appDirectory (const std::string& appDir
     }
 
     for (const auto& root : steamRootsWindows ()) {
-	auto currentpath = root / "steamapps" / "common" / appDirectory / path;
+        auto currentpath = root / "steamapps" / "common" / appDirectory / path;
 
-	if (!std::filesystem::exists (currentpath) || !std::filesystem::is_directory (currentpath)) {
-	    continue;
-	}
+        if (!std::filesystem::exists (currentpath) || !std::filesystem::is_directory (currentpath)) {
+            continue;
+        }
 
-	return currentpath;
+        return currentpath;
     }
 
     sLog.exception ("Cannot find directory for steam app ", appDirectory, ": ", path);
@@ -156,13 +157,13 @@ std::filesystem::path Steam::FileSystem::appDirectory (const std::string& appDir
     auto homepath = detectHomepath ();
 
     for (const auto& current : appDirectoryPaths) {
-	auto currentpath = std::filesystem::path (homepath) / current / appDirectory / path;
+        auto currentpath = std::filesystem::path (homepath) / current / appDirectory / path;
 
-	if (!std::filesystem::exists (currentpath) || !std::filesystem::is_directory (currentpath)) {
-	    continue;
-	}
+        if (!std::filesystem::exists (currentpath) || !std::filesystem::is_directory (currentpath)) {
+            continue;
+        }
 
-	return currentpath;
+        return currentpath;
     }
 
     sLog.exception ("Cannot find directory for steam app ", appDirectory, ": ", path);

@@ -440,7 +440,7 @@ void ApplicationContext::loadSettingsFromArgv () {
 
     audioSettingsGroup.add_argument ("-v", "--volume")
         .help ("Volume for all the sounds in the background")
-        .default_value (15)
+        .default_value (60)
         .store_into (this->settings.audio.volume);
 
     audioSettingsGroup.add_argument ("-s", "--silent")
