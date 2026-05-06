@@ -40,6 +40,11 @@ ScriptEngine::~ScriptEngine () {
     }
 }
 
+void ScriptEngine::setCanvasSize (float width, float height) {
+    this->m_canvasSize.x = width;
+    this->m_canvasSize.y = height;
+}
+
 JSValue ScriptEngine::dynamicValueToJS (const DynamicValue& value) const {
     JSContext* ctx = this->m_context;
 
@@ -311,12 +316,21 @@ DynamicValueUniquePtr ScriptEngine::evaluate (
     JS_SetPropertyStr (ctx, globalObj, "__scriptProps", JS_DupValue (ctx, propsObj));
     JS_SetPropertyStr (ctx, globalObj, "__currentValue", this->dynamicValueToJS (currentValue));
 
+    // Inject minimal WE-like engine global.
+    JSValue engineObj = JS_NewObject (ctx);
+    JSValue canvasSizeObj = JS_NewObject (ctx);
+    JS_SetPropertyStr (ctx, canvasSizeObj, "x", JS_NewFloat64 (ctx, this->m_canvasSize.x));
+    JS_SetPropertyStr (ctx, canvasSizeObj, "y", JS_NewFloat64 (ctx, this->m_canvasSize.y));
+    JS_SetPropertyStr (ctx, engineObj, "canvasSize", canvasSizeObj);
+    JS_SetPropertyStr (ctx, globalObj, "engine", engineObj);
+
     // Evaluate
     JSValue result = JS_Eval (ctx, evalScript.c_str (), evalScript.size (), "<script>", JS_EVAL_TYPE_GLOBAL);
 
     // Clean up globals
     JS_SetPropertyStr (ctx, globalObj, "__scriptProps", JS_UNDEFINED);
     JS_SetPropertyStr (ctx, globalObj, "__currentValue", JS_UNDEFINED);
+    JS_SetPropertyStr (ctx, globalObj, "engine", JS_UNDEFINED);
     JS_FreeValue (ctx, globalObj);
     JS_FreeValue (ctx, propsObj);
 

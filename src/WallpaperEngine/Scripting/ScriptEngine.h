@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 
+#include <glm/vec2.hpp>
+
 #include "WallpaperEngine/Data/Model/DynamicValue.h"
 #include "WallpaperEngine/Data/Model/Types.h"
 
@@ -34,6 +36,7 @@ public:
         const std::string& scriptSource, const std::map<std::string, DynamicValue*>& scriptProperties,
         const DynamicValue& currentValue
     );
+    void setCanvasSize (float width, float height);
 
 private:
     ScriptEngine ();
@@ -43,5 +46,6 @@ private:
 
     JSRuntime* m_runtime = nullptr;
     JSContext* m_context = nullptr;
+    glm::vec2 m_canvasSize = { 1920.0f, 1080.0f };
 };
 } // namespace WallpaperEngine::Scripting

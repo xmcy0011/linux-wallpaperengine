@@ -32,6 +32,7 @@ endif()
 find_package(X11)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(Freetype REQUIRED)
 
 find_package(GLUT REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -397,11 +398,17 @@ set(COMMON_SOURCES
     src/WallpaperEngine/Render/Objects/CSound.cpp
     src/WallpaperEngine/Render/Objects/CParticle.h
     src/WallpaperEngine/Render/Objects/CParticle.cpp
+    src/WallpaperEngine/Render/Objects/CText.h
+    src/WallpaperEngine/Render/Objects/CText.cpp
 
     src/WallpaperEngine/Render/CFBO.h
     src/WallpaperEngine/Render/CFBO.cpp
     src/WallpaperEngine/Render/Objects/Effects/CPass.h
     src/WallpaperEngine/Render/Objects/Effects/CPass.cpp
+    src/WallpaperEngine/Render/Text/FontAtlas.h
+    src/WallpaperEngine/Render/Text/FontAtlas.cpp
+    src/WallpaperEngine/Render/Text/Utf8.h
+    src/WallpaperEngine/Render/Text/Utf8.cpp
 
     src/WallpaperEngine/Data/Assets/Types.h
     src/WallpaperEngine/Data/Assets/Texture.h
@@ -512,6 +519,7 @@ target_link_libraries (linux-wallpaperengine-lib PUBLIC
     ${GLM_LINK_TARGET}
     ${OPENGL_LIBRARIES}
     GLEW::GLEW
+    Freetype::Freetype
     ${GLUT_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${LZ4_LIBRARY}

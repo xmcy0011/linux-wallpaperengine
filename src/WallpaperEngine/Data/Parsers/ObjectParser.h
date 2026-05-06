@@ -33,6 +33,8 @@ private:
     static std::vector<ImageAnimationLayerUniquePtr> parseAnimationLayers (const JSON& it, const Project& project);
     static ImageAnimationLayerUniquePtr parseAnimationLayer (const JSON& it, const Project& project);
 
+    static TextUniquePtr parseText (const JSON& it, const Project& project, ObjectData base);
+
     // Particle parsing helpers
     static ParticleEmitter parseParticleEmitter (const JSON& it);
     static ParticleInitializerUniquePtr parseParticleInitializer (const JSON& it, const Properties& properties);

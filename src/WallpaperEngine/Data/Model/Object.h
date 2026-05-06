@@ -125,6 +125,40 @@ public:
     ~Image () override = default;
 };
 
+struct TextData {
+    /** the text content */
+    UserSettingUniquePtr text;
+    /** the font path */
+    UserSettingUniquePtr font;
+    /** the font size */
+    UserSettingUniquePtr fontSize;
+    /** the start of the text, vec3 */
+    UserSettingUniquePtr origin;
+    /** the visibility of the text */
+    UserSettingUniquePtr visible;
+    /** the color of the text, vec3/vec4 */
+    UserSettingUniquePtr color;
+    /** the scale of the text */
+    UserSettingUniquePtr scale;
+    /** the angles of the text */
+    UserSettingUniquePtr angles;
+    /** the alignment of the text, center / left / right + top/bottom */
+    std::string horizontalAlign;
+    /** the vertical alignment of the text */
+    std::string verticalAlign;
+    /** the size of the text, optional: layout box */
+    glm::vec2 size;
+    /** the parallax depth of the text */
+    UserSettingUniquePtr parallaxDepth;
+};
+
+class Text : public Object, public TextData {
+public:
+    explicit Text(ObjectData data, TextData textData) noexcept
+        : Object(std::move(data)), TextData(std::move(textData)) {}
+    ~Text() override = default;
+};
+
 struct SoundData {
     /** Playback mode, loop, */
     // TODO: WRITE AN ENUM FOR THIS

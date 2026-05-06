@@ -2,6 +2,7 @@
 #include "EffectParser.h"
 #include "MaterialParser.h"
 #include "ModelParser.h"
+#include "UserSettingParser.h"
 
 #include "ShaderConstantParser.h"
 #include "WallpaperEngine/Data/Model/Object.h"
@@ -56,7 +57,7 @@ ObjectUniquePtr ObjectParser::parse (const JSON& it, const Project& project) {
     } else if (particleIt != it.end ()) {
         return parseParticle (it, project, std::move (basedata));
     } else if (textIt != it.end ()) {
-        sLog.error ("Text objects are not supported yet");
+        return parseText (it, project, std::move (basedata));
     } else if (lightIt != it.end ()) {
         sLog.error ("Light objects are not supported yet");
     } else {
@@ -136,6 +137,38 @@ ObjectParser::parseImage (const JSON& it, const Project& project, ObjectData bas
     }
 
     return result;
+}
+
+TextUniquePtr ObjectParser::parseText (const JSON& it, const Project& project, ObjectData base) {
+    const auto& properties = project.properties;
+    auto stringSetting = [&] (const char* key, const std::string& defaultValue) -> UserSettingUniquePtr {
+        const auto setting = it.optional (key);
+        if (setting.has_value ()) {
+            return UserSettingParser::parse (*setting, properties);
+        }
+        return std::make_unique<UserSetting> (UserSetting {
+            .value = std::make_unique<DynamicValue> (defaultValue), 
+            .property = nullptr, 
+            .condition = std::nullopt });
+    };
+
+    return std::make_unique<Text> (
+        std::move (base),
+        TextData {
+            .text = stringSetting ("text", ""),
+            .font = stringSetting ("font", "fonts/NotoSans-Regular.ttf"),
+            .fontSize = it.user ("pointsize", properties, 32.0f),
+            .origin = it.user("origin", properties, glm::vec3(0.0f)),
+            .visible = it.user ("visible", properties, true),
+            .color = it.user ("color", properties, glm::vec4 (1.0f)),
+            .scale = it.user ("scale", properties, glm::vec3 (1.0f)),
+            .angles = it.user ("angles", properties, glm::vec3 (0.0f)),
+            .horizontalAlign = it.optional<std::string> ("horizontalalign", "center"),
+            .verticalAlign = it.optional<std::string> ("verticalalign", "center"),
+            .size = it.optional ("size", glm::vec2 (0.0f)),
+            .parallaxDepth = it.user ("parallaxDepth", properties, glm::vec2 (0.0f)),
+        }
+    );
 }
 
 std::vector<ImageEffectUniquePtr> ObjectParser::parseEffects (const JSON& it, const Project& project) {

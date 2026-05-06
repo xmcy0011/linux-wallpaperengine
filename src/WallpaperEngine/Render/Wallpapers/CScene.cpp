@@ -1,6 +1,8 @@
 #include "WallpaperEngine/Render/Objects/CImage.h"
 #include "WallpaperEngine/Render/Objects/CParticle.h"
 #include "WallpaperEngine/Render/Objects/CSound.h"
+#include "WallpaperEngine/Render/Objects/CText.h"
+#include "WallpaperEngine/Scripting/ScriptEngine.h"
 
 #include "WallpaperEngine/Render/WallpaperState.h"
 
@@ -35,7 +37,7 @@ CScene::CScene (
 
     // detect size if the orthogonal project is auto
     if (scene->camera.projection.isAuto) {
-	// TODO: CALCULATE ORTHOGONAL PROJECTION BASED ON CONTENT'S SIZE HERE
+        // TODO: CALCULATE ORTHOGONAL PROJECTION BASED ON CONTENT'S SIZE HERE
     }
 
     this->m_parallaxDisplacement = { 0, 0 };
@@ -48,10 +50,13 @@ CScene::CScene (
 
     const uint32_t sceneWidth = this->m_camera->getWidth ();
     const uint32_t sceneHeight = this->m_camera->getHeight ();
+    WallpaperEngine::Scripting::ScriptEngine::instance ().setCanvasSize (
+        static_cast<float> (sceneWidth), static_cast<float> (sceneHeight)
+    );
 
     this->_rt_shadowAtlas = this->create (
-	"_rt_shadowAtlas", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0, { sceneWidth, sceneHeight },
-	{ sceneWidth, sceneHeight }
+        "_rt_shadowAtlas", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0, { sceneWidth, sceneHeight },
+        { sceneWidth, sceneHeight }
     );
     this->alias ("_alias_lightCookie", "_rt_shadowAtlas");
 
@@ -62,26 +67,26 @@ CScene::CScene (
 
     // create all objects based off their dependencies
     for (const auto& object : scene->objects) {
-	this->createObject (*object);
+        this->createObject (*object);
     }
 
     // copy over objects by render order
     for (const auto& object : scene->objects) {
-	this->addObjectToRenderOrder (*object);
+        this->addObjectToRenderOrder (*object);
     }
 
     // create extra framebuffers for the bloom effect
     this->_rt_4FrameBuffer = this->create (
-	"_rt_4FrameBuffer", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0, { sceneWidth / 4, sceneHeight / 4 },
-	{ sceneWidth / 4, sceneHeight / 4 }
+        "_rt_4FrameBuffer", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0, { sceneWidth / 4, sceneHeight / 4 },
+        { sceneWidth / 4, sceneHeight / 4 }
     );
     this->_rt_8FrameBuffer = this->create (
-	"_rt_8FrameBuffer", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0, { sceneWidth / 8, sceneHeight / 8 },
-	{ sceneWidth / 8, sceneHeight / 8 }
+        "_rt_8FrameBuffer", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0, { sceneWidth / 8, sceneHeight / 8 },
+        { sceneWidth / 8, sceneHeight / 8 }
     );
     this->_rt_Bloom = this->create (
-	"_rt_Bloom", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0, { sceneWidth / 8, sceneHeight / 8 },
-	{ sceneWidth / 8, sceneHeight / 8 }
+        "_rt_Bloom", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0, { sceneWidth / 8, sceneHeight / 8 },
+        { sceneWidth / 8, sceneHeight / 8 }
     );
 
     //
@@ -95,44 +100,44 @@ CScene::CScene (
     const auto bloomSize = glm::vec2 { sceneWidth, sceneHeight };
 
     const JSON bloom
-	= { { "image", "models/wpenginelinux.json" },
-	    { "name", "bloomimagewpenginelinux" },
-	    { "visible", true },
-	    { "scale", "1.0 1.0 1.0" },
-	    { "angles", "0.0 0.0 0.0" },
-	    { "origin",
-	      std::to_string (bloomOrigin.x) + " " + std::to_string (bloomOrigin.y) + " "
-		  + std::to_string (bloomOrigin.z) },
-	    { "size", std::to_string (bloomSize.x) + " " + std::to_string (bloomSize.y) },
-	    { "id", -1 },
-	    { "effects",
-	      JSON::array (
-		  { { { "file", "effects/wpenginelinux/bloomeffect.json" },
-		      { "id", 15242000 },
-		      { "name", "" },
-		      { "passes",
-			JSON::array (
-			    { { { "constantshadervalues",
-				  { { "bloomstrength", this->getScene ().camera.bloom.strength->value->getFloat () },
-				    { "bloomthreshold",
-				      this->getScene ().camera.bloom.threshold->value->getFloat () } } } },
-			      { { "constantshadervalues",
-				  { { "bloomstrength", this->getScene ().camera.bloom.strength->value->getFloat () },
-				    { "bloomthreshold",
-				      this->getScene ().camera.bloom.threshold->value->getFloat () } } } },
-			      { { "constantshadervalues",
-				  { { "bloomstrength", this->getScene ().camera.bloom.strength->value->getFloat () },
-				    { "bloomthreshold",
-				      this->getScene ().camera.bloom.threshold->value->getFloat () } } } } }
-			) } } }
-	      ) } };
+        = { { "image", "models/wpenginelinux.json" },
+            { "name", "bloomimagewpenginelinux" },
+            { "visible", true },
+            { "scale", "1.0 1.0 1.0" },
+            { "angles", "0.0 0.0 0.0" },
+            { "origin",
+              std::to_string (bloomOrigin.x) + " " + std::to_string (bloomOrigin.y) + " "
+                  + std::to_string (bloomOrigin.z) },
+            { "size", std::to_string (bloomSize.x) + " " + std::to_string (bloomSize.y) },
+            { "id", -1 },
+            { "effects",
+              JSON::array (
+                  { { { "file", "effects/wpenginelinux/bloomeffect.json" },
+                      { "id", 15242000 },
+                      { "name", "" },
+                      { "passes",
+                        JSON::array (
+                            { { { "constantshadervalues",
+                                  { { "bloomstrength", this->getScene ().camera.bloom.strength->value->getFloat () },
+                                    { "bloomthreshold",
+                                      this->getScene ().camera.bloom.threshold->value->getFloat () } } } },
+                              { { "constantshadervalues",
+                                  { { "bloomstrength", this->getScene ().camera.bloom.strength->value->getFloat () },
+                                    { "bloomthreshold",
+                                      this->getScene ().camera.bloom.threshold->value->getFloat () } } } },
+                              { { "constantshadervalues",
+                                  { { "bloomstrength", this->getScene ().camera.bloom.strength->value->getFloat () },
+                                    { "bloomthreshold",
+                                      this->getScene ().camera.bloom.threshold->value->getFloat () } } } } }
+                        ) } } }
+              ) } };
 
     // create image for bloom passes
     if (scene->camera.bloom.enabled->value->getBool ()) {
-	this->m_bloomObjectData = ObjectParser::parse (bloom, scene->project);
-	this->m_bloomObject = this->createObject (*this->m_bloomObjectData);
+        this->m_bloomObjectData = ObjectParser::parse (bloom, scene->project);
+        this->m_bloomObject = this->createObject (*this->m_bloomObjectData);
 
-	this->m_objectsByRenderOrder.push_back (this->m_bloomObject);
+        this->m_objectsByRenderOrder.push_back (this->m_bloomObject);
     }
 }
 
@@ -141,7 +146,7 @@ CScene::~CScene () {
     this->m_bloomObject = nullptr;
 
     for (const auto& val : this->m_objects | std::views::values) {
-	delete val;
+        delete val;
     }
 
     this->m_objectsByRenderOrder.clear ();
@@ -153,74 +158,78 @@ Render::CObject* CScene::createObject (const Object& object) {
 
     // ensure the item is not loaded already
     if (const auto current = this->m_objects.find (object.id); current != this->m_objects.end ()) {
-	return current->second;
+        return current->second;
     }
 
     // check dependencies too!
     for (const auto& cur : object.dependencies) {
-	// self-dependency is a possibility...
-	if (cur == object.id) {
-	    continue;
-	}
+        // self-dependency is a possibility...
+        if (cur == object.id) {
+            continue;
+        }
 
-	const auto dep
-	    = std::ranges::find_if (this->getScene ().objects, [&cur] (const auto& o) { return o->id == cur; });
+        const auto dep
+            = std::ranges::find_if (this->getScene ().objects, [&cur] (const auto& o) { return o->id == cur; });
 
-	if (dep != this->getScene ().objects.end ()) {
-	    this->createObject (**dep);
-	}
+        if (dep != this->getScene ().objects.end ()) {
+            this->createObject (**dep);
+        }
     }
 
     // check if the item has any parent and also create it first
     if (object.parent.has_value ()) {
-	int parentId = object.parent.value ();
+        int parentId = object.parent.value ();
 
-	const auto dep = std::ranges::find_if (this->getScene ().objects, [&parentId] (const auto& o) {
-	    return o->id == parentId;
-	});
+        const auto dep = std::ranges::find_if (this->getScene ().objects, [&parentId] (const auto& o) {
+            return o->id == parentId;
+        });
 
-	if (dep == this->getScene ().objects.end ()) {
-	    sLog.exception ("Cannot find parent ", parentId, " for object ", object.id);
-	}
+        if (dep == this->getScene ().objects.end ()) {
+            sLog.exception ("Cannot find parent ", parentId, " for object ", object.id);
+        }
 
-	this->createObject (**dep);
+        this->createObject (**dep);
     }
 
     if (object.is<Image> ()) {
-	auto* image = new Objects::CImage (*this, *object.as<Image> ());
+        auto* image = new Objects::CImage (*this, *object.as<Image> ());
 
-	try {
-	    image->setup ();
-	} catch (std::runtime_error&) {
-	    // this error message is already printed, so just show extra info about it
-	    sLog.error ("Cannot setup image ", image->getImage ().name);
-	}
+        try {
+            image->setup ();
+        } catch (std::runtime_error&) {
+            // this error message is already printed, so just show extra info about it
+            sLog.error ("Cannot setup image ", image->getImage ().name);
+        }
 
-	renderObject = image;
+        renderObject = image;
     } else if (object.is<Sound> ()) {
-	renderObject = new Objects::CSound (*this, *object.as<Sound> ());
+        renderObject = new Objects::CSound (*this, *object.as<Sound> ());
     } else if (object.is<Particle> ()) {
-	if (this->getContext ().getApp ().getContext ().settings.general.disableParticles == true) {
-	    sLog.debug ("Ignoring particle system (disabled in settings): ", object.as<Particle> ()->name);
-	    return nullptr;
-	}
+        if (this->getContext ().getApp ().getContext ().settings.general.disableParticles == true) {
+            sLog.debug ("Ignoring particle system (disabled in settings): ", object.as<Particle> ()->name);
+            return nullptr;
+        }
 
-	auto* particle = new Objects::CParticle (*this, *object.as<Particle> ());
+        auto* particle = new Objects::CParticle (*this, *object.as<Particle> ());
 
-	try {
-	    particle->setup ();
-	} catch (std::runtime_error&) {
-	    sLog.error ("Cannot setup particle ", particle->getParticle ().name);
-	}
+        try {
+            particle->setup ();
+        } catch (std::runtime_error&) {
+            sLog.error ("Cannot setup particle ", particle->getParticle ().name);
+        }
 
-	renderObject = particle;
+        renderObject = particle;
+    } else if (object.is<Data::Model::Text> ()) {
+        auto* text = new Objects::CText (*this, *object.as<Data::Model::Text> ());
+        text->setup ();
+        renderObject = text;
     } else {
-	sLog.debug ("Unknown object type, creating placeholder, empty object: ", object.id);
-	renderObject = new CObject (*this, object);
+        sLog.debug ("Unknown object type, creating placeholder, empty object: ", object.id);
+        renderObject = new CObject (*this, object);
     }
 
     if (renderObject != nullptr) {
-	this->m_objects.emplace (renderObject->getId (), renderObject);
+        this->m_objects.emplace (renderObject->getId (), renderObject);
     }
 
     return renderObject;
@@ -231,73 +240,78 @@ void CScene::addObjectToRenderOrder (const Object& object) {
 
     // ignores not created objects like particle systems
     if (obj == this->m_objects.end ()) {
-	return;
+        return;
     }
 
     // take into account any dependency first
     for (const auto& dep : object.dependencies) {
-	// self-dependency is possible
-	if (dep == object.id) {
-	    continue;
-	}
+        // self-dependency is possible
+        if (dep == object.id) {
+            continue;
+        }
 
-	// add the dependency to the list if it's created
-	auto depIt = std::ranges::find_if (this->getScene ().objects, [&dep] (const auto& o) { return o->id == dep; });
+        // add the dependency to the list if it's created
+        auto depIt = std::ranges::find_if (this->getScene ().objects, [&dep] (const auto& o) { return o->id == dep; });
 
-	if (depIt != this->getScene ().objects.end ()) {
-	    this->addObjectToRenderOrder (**depIt);
-	} else {
-	    sLog.error ("Cannot find dependency ", dep, " for object ", object.id);
-	}
+        if (depIt != this->getScene ().objects.end ()) {
+            this->addObjectToRenderOrder (**depIt);
+        } else {
+            sLog.error ("Cannot find dependency ", dep, " for object ", object.id);
+        }
     }
 
     // ensure we're added only once to the render list
     const auto renderIt = std::ranges::find_if (this->m_objectsByRenderOrder, [&object] (const auto& o) {
-	return o->getId () == object.id;
+        return o->getId () == object.id;
     });
 
     if (renderIt == this->m_objectsByRenderOrder.end ()) {
-	this->m_objectsByRenderOrder.emplace_back (obj->second);
+        this->m_objectsByRenderOrder.emplace_back (obj->second);
     }
 }
 
 Camera& CScene::getCamera () const { return *this->m_camera; }
 
 void CScene::renderFrame (const glm::ivec4& viewport) {
+    // Keep engine.canvasSize in sync with actual scene size for scene scripts.
+    WallpaperEngine::Scripting::ScriptEngine::instance ().setCanvasSize (
+        static_cast<float> (this->getWidth ()), static_cast<float> (this->getHeight ())
+    );
+
     // ensure the virtual mouse position is up to date
     this->updateMouse (viewport);
 
     // update the parallax position if required
     if (this->getScene ().camera.parallax.enabled->value->getBool ()
-	&& !this->getContext ().getApp ().getContext ().settings.mouse.disableparallax) {
-	const float influence = this->getScene ().camera.parallax.mouseInfluence->value->getFloat ();
-	const float amount = this->getScene ().camera.parallax.amount->value->getFloat ();
-	const float delay = glm::min (
-	    static_cast<float> (this->getScene ().camera.parallax.delay->value->getBool ()), g_Time - g_TimeLast
-	);
+        && !this->getContext ().getApp ().getContext ().settings.mouse.disableparallax) {
+        const float influence = this->getScene ().camera.parallax.mouseInfluence->value->getFloat ();
+        const float amount = this->getScene ().camera.parallax.amount->value->getFloat ();
+        const float delay = glm::min (
+            static_cast<float> (this->getScene ().camera.parallax.delay->value->getBool ()), g_Time - g_TimeLast
+        );
 
-	this->m_parallaxDisplacement
-	    = glm::mix (this->m_parallaxDisplacement, (this->m_mousePosition * amount) * influence, delay);
+        this->m_parallaxDisplacement
+            = glm::mix (this->m_parallaxDisplacement, (this->m_mousePosition * amount) * influence, delay);
     }
 
     // update main textures for images
     for (const auto& cur : this->m_objectsByRenderOrder) {
-	if (!cur->is<Objects::CImage> ()) {
-	    continue;
-	}
+        if (!cur->is<Objects::CImage> ()) {
+            continue;
+        }
 
-	const Objects::CImage* image = cur->as<Objects::CImage> ();
+        const Objects::CImage* image = cur->as<Objects::CImage> ();
 
 #if !NDEBUG
-	const std::string message = "Updating texture " + image->getImage ().model->filename;
+        const std::string message = "Updating texture " + image->getImage ().model->filename;
 
-	glPushDebugGroup (GL_DEBUG_SOURCE_APPLICATION, 0, -1, message.c_str ());
+        glPushDebugGroup (GL_DEBUG_SOURCE_APPLICATION, 0, -1, message.c_str ());
 #endif
 
-	image->getTexture ()->update ();
+        image->getTexture ()->update ();
 
 #if !NDEBUG
-	glPopDebugGroup ();
+        glPopDebugGroup ();
 #endif
     }
 
@@ -311,7 +325,7 @@ void CScene::renderFrame (const glm::ivec4& viewport) {
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (const auto& cur : this->m_objectsByRenderOrder) {
-	cur->render ();
+        cur->render ();
     }
 }
 
@@ -338,7 +352,7 @@ void CScene::updateMouse (const glm::ivec4& viewport) {
     this->m_mousePositionNormalized.y = uvs.vstart + normalizedMouseY * (uvs.vend - uvs.vstart);
 
     // Invert previous normalization of Y to match what the shader expects
-    double mouseY = 1.0 - normalizedMouseY; 
+    double mouseY = 1.0 - normalizedMouseY;
 
     this->m_mousePosition.x = this->m_mousePositionNormalized.x;
     this->m_mousePosition.y = uvs.vstart + mouseY * (uvs.vend - uvs.vstart);

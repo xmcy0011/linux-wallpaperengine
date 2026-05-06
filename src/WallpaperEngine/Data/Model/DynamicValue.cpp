@@ -21,6 +21,8 @@ DynamicValue::DynamicValue (int value) { this->DynamicValue::update (value); }
 
 DynamicValue::DynamicValue (bool value) { this->DynamicValue::update (value); }
 
+DynamicValue::DynamicValue (const std::string& value) { this->DynamicValue::update (value); }
+
 DynamicValue::~DynamicValue () {
     if (this->m_aliveFlag) {
         *this->m_aliveFlag = false;
@@ -257,6 +259,7 @@ void DynamicValue::update (const DynamicValue& other) {
     this->m_int = other.getInt ();
     this->m_bool = other.getBool ();
     this->m_type = other.getType ();
+    this->m_string = other.getString ();
 
     if (this->m_condition.has_value () && other.getType () == UnderlyingType::String) {
         // TODO: DOES THIS NEED TO HAPPEN WITH OTHER TYPES TOO?

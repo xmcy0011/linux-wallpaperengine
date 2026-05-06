@@ -2,6 +2,7 @@
 
 #include "../Utils/TypeCaster.h"
 #include "DynamicValue.h"
+#include "WallpaperEngine/Data/Builders/VectorBuilder.h"
 #include <map>
 #include <string>
 #include <utility>

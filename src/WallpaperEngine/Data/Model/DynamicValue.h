@@ -42,6 +42,7 @@ public:
     explicit DynamicValue (float value);
     explicit DynamicValue (int value);
     explicit DynamicValue (bool value);
+    explicit DynamicValue (const std::string& value);
     virtual ~DynamicValue ();
 
     [[nodiscard]] const glm::ivec4& getIVec4 () const;
@@ -123,7 +124,7 @@ private:
     float m_float = 0.0f;
     int m_int = 0;
     bool m_bool = false;
-    std::string m_string = "";
+    std::string m_string;
     UnderlyingType m_type = Null;
     std::optional<ConditionInfo> m_condition = std::nullopt;
 };

@@ -7,6 +7,7 @@
     "freeglut",
     "zlib",
     "sdl2",
-    "ffmpeg"
+    "ffmpeg",
+    "freetype",
   ]
 }

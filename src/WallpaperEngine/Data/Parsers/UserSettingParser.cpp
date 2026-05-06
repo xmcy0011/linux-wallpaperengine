@@ -4,6 +4,11 @@
 #include "WallpaperEngine/Data/Model/ScriptedDynamicValue.h"
 #include "WallpaperEngine/Data/Model/UserSetting.h"
 
+#include <cmath>
+#include <cstdlib>
+#include <sstream>
+#include <vector>
+
 using namespace WallpaperEngine::Data::Parsers;
 using namespace WallpaperEngine::Data::Builders;
 
@@ -51,14 +56,39 @@ UserSettingUniquePtr UserSettingParser::parse (const json& data, const Propertie
     // actual value parsing
     if (valueIt.is_string ()) {
         std::string str = valueIt;
+        std::istringstream iss (str);
+        std::vector<std::string> tokens;
+        std::string token;
+        while (iss >> token) {
+            tokens.push_back (token);
+        }
 
-        // TODO: VALIDATE THIS IS RIGHT?
-        if (int size = VectorBuilder::preparseSize (str); size == 2) {
-            value->update (static_cast<glm::vec2> (valueIt));
-        } else if (size == 3) {
-            value->update (static_cast<glm::vec3> (valueIt));
+        auto isNumericToken = [] (const std::string& t) -> bool {
+            if (t.empty ()) {
+                return false;
+            }
+            char* end = nullptr;
+            const float v = std::strtof (t.c_str (), &end);
+            return end != nullptr && end != t.c_str () && *end == '\0' && std::isfinite (v);
+        };
+
+        bool allNumeric = !tokens.empty ();
+        for (const auto& t : tokens) {
+            if (!isNumericToken (t)) {
+                allNumeric = false;
+                break;
+            }
+        }
+
+        // Only parse as vector when the string is clearly a numeric vector.
+        if (allNumeric && tokens.size () == 2) {
+            value->update (VectorBuilder::parse<glm::vec2> (str));
+        } else if (allNumeric && tokens.size () == 3) {
+            value->update (VectorBuilder::parse<glm::vec3> (str));
+        } else if (allNumeric && tokens.size () == 4) {
+            value->update (VectorBuilder::parse<glm::vec4> (str));
         } else {
-            value->update (static_cast<glm::vec4> (valueIt));
+            value->update (str);
         }
     } else if (valueIt.is_number_integer ()) {
         value->update (valueIt.get<int> ());
