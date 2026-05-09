@@ -1,16 +1,28 @@
 #include "CText.h"
 
+#include <GL/glew.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iterator>
 
+#include "WallpaperEngine/Data/Model/Object.h"
 #include "WallpaperEngine/Logging/Log.h"
 #include "WallpaperEngine/Render/Text/Utf8.h"
 
 using namespace WallpaperEngine::Render::Objects;
 
 namespace {
+std::string lowerAscii (std::string s) {
+    for (char& c : s) {
+        if (static_cast<unsigned char> (c) >= 'A' && static_cast<unsigned char> (c) <= 'Z') {
+            c = static_cast<char> (c - 'A' + 'a');
+        }
+    }
+    return s;
+}
+
 GLuint compileShader (GLenum type, const char* source) {
     const GLuint id = glCreateShader (type);
     glShaderSource (id, 1, &source, nullptr);
@@ -131,19 +143,44 @@ void CText::setup () {
 }
 
 glm::vec4 CText::getColor4 () const {
-    const auto type = this->m_text.color->value->getType ();
-    if (type == DynamicValue::Vec4 || type == DynamicValue::IVec4) {
-        return this->m_text.color->value->getVec4 ();
+    const auto& dv = *this->m_text.color->value;
+    const auto type = dv.getType ();
+    if (type == DynamicValue::Null) {
+        return glm::vec4 (1.0f);
     }
-    return glm::vec4 (this->m_text.color->value->getVec3 (), 1.0f);
+    if (type == DynamicValue::Vec4) {
+        return dv.getVec4 ();
+    }
+    if (type == DynamicValue::IVec4) {
+        const glm::ivec4 c = dv.getIVec4 ();
+        constexpr float s = 1.0f / 255.0f;
+        return glm::vec4 (static_cast<float> (c.x) * s, static_cast<float> (c.y) * s, static_cast<float> (c.z) * s,
+                          static_cast<float> (c.w) * s);
+    }
+    if (type == DynamicValue::Vec3) {
+        return glm::vec4 (dv.getVec3 (), 1.0f);
+    }
+    if (type == DynamicValue::IVec3) {
+        const glm::ivec3 c = dv.getIVec3 ();
+        constexpr float s = 1.0f / 255.0f;
+        return glm::vec4 (static_cast<float> (c.x) * s, static_cast<float> (c.y) * s, static_cast<float> (c.z) * s,
+                          1.0f);
+    }
+    return glm::vec4 (1.0f);
 }
 
 void CText::rebuildMeshIfNeeded () {
     const std::string content = this->m_text.text->value->getString ();
     const float fontSize = this->m_text.fontSize->value->getFloat ();
     const std::string fontPath = this->m_text.font->value->getString ();
+    const auto& textDataForCache = static_cast<const Data::Model::TextData&> (this->m_text);
+    const glm::vec3 originNow = textDataForCache.origin->value->getVec3 ();
+    const glm::vec3 scaleNow = this->m_text.scale->value->getVec3 ();
 
-    if (content == this->m_cachedText && fontSize == this->m_cachedSize && fontPath == this->m_cachedFont) {
+    if (content == this->m_cachedText && fontSize == this->m_cachedSize && fontPath == this->m_cachedFont
+        && originNow == this->m_cachedOrigin && scaleNow == this->m_cachedScale
+        && textDataForCache.horizontalAlign == this->m_cachedHorizontalAlign
+        && textDataForCache.verticalAlign == this->m_cachedVerticalAlign) {
         return;
     }
 
@@ -169,25 +206,75 @@ void CText::rebuildMeshIfNeeded () {
         this->m_cachedText = content;
         this->m_cachedSize = fontSize;
         this->m_cachedFont = fontPath;
+        this->m_cachedOrigin = originNow;
+        this->m_cachedScale = scaleNow;
+        this->m_cachedHorizontalAlign = textDataForCache.horizontalAlign;
+        this->m_cachedVerticalAlign = textDataForCache.verticalAlign;
         return;
     }
 
-    const auto& textData = static_cast<const Data::Model::TextData&> (this->m_text);
-    const glm::vec3 origin = textData.origin->value->getVec3 ();
-    const glm::vec3 scale = this->m_text.scale->value->getVec3 ();
+    const glm::vec3 origin = originNow;
+    const glm::vec3 scale = scaleNow;
     const float sx = scale.x;
     const float sy = scale.y;
     const float sceneW = static_cast<float> (this->getScene ().getWidth ());
     const float sceneH = static_cast<float> (this->getScene ().getHeight ());
 
-    float penX = origin.x - sceneW / 2.0f;
-    float penY = sceneH / 2.0f - origin.y;
+    const std::string hAlign = lowerAscii (textDataForCache.horizontalAlign);
+    const std::string vAlign = lowerAscii (textDataForCache.verticalAlign);
 
     const std::u32string text32 = WallpaperEngine::Render::Text::utf8ToUtf32 (content);
+    std::vector<std::u32string> lines;
+    lines.emplace_back ();
     for (char32_t cp : text32) {
         if (cp == U'\n') {
-            penX = origin.x - sceneW / 2.0f;
-            penY -= fontSize * sy;
+            lines.emplace_back ();
+        } else {
+            lines.back ().push_back (cp);
+        }
+    }
+
+    std::vector<float> lineWidths;
+    lineWidths.reserve (lines.size ());
+    for (const auto& line : lines) {
+        float w = 0.0f;
+        for (char32_t cp : line) {
+            const auto& g = this->m_atlas->getGlyph (cp);
+            w += static_cast<float> (g.advance >> 6) * sx;
+        }
+        lineWidths.push_back (w);
+    }
+
+    const float lineH = fontSize * sy;
+    const auto lineStartX = [&] (const float lineWidth) {
+        float x = origin.x - sceneW / 2.0f;
+        if (hAlign.find ("center") != std::string::npos) {
+            x -= lineWidth * 0.5f;
+        } else if (hAlign.find ("right") != std::string::npos) {
+            x -= lineWidth;
+        }
+        return x;
+    };
+
+    float penY = sceneH / 2.0f - origin.y;
+    if (vAlign.find ("center") != std::string::npos) {
+        if (lines.size () == 1) {
+            penY += lineH * 0.5f;
+        } else {
+            penY += (static_cast<float> (lines.size ()) - 1.0f) * lineH * 0.5f;
+        }
+    } else if (vAlign.find ("bottom") != std::string::npos) {
+        penY += (static_cast<float> (lines.size ()) - 1.0f) * lineH;
+    }
+
+    size_t lineIndex = 0;
+    float penX = lineStartX (lineWidths[lineIndex]);
+
+    for (char32_t cp : text32) {
+        if (cp == U'\n') {
+            lineIndex++;
+            penX = lineStartX (lineWidths[lineIndex]);
+            penY -= lineH;
             continue;
         }
 
@@ -213,9 +300,6 @@ void CText::rebuildMeshIfNeeded () {
         this->m_indices.push_back (base + 0);
 
         penX += static_cast<float> (glyph.advance >> 6) * sx;
-
-        std::string cpStr = std::to_string(cp);
-        sLog.out("rebuildMeshIfNeeded, char:", cpStr, ", fontSize: ", fontSize, ", sceneW: ", sceneW, ", sceneH: ", sceneH, ", penX: ", penX, ", penY: ", penY);
     }
 
     glBindBuffer (GL_ARRAY_BUFFER, this->m_vbo);
@@ -232,6 +316,10 @@ void CText::rebuildMeshIfNeeded () {
     this->m_cachedText = content;
     this->m_cachedSize = fontSize;
     this->m_cachedFont = fontPath;
+    this->m_cachedOrigin = originNow;
+    this->m_cachedScale = scaleNow;
+    this->m_cachedHorizontalAlign = textDataForCache.horizontalAlign;
+    this->m_cachedVerticalAlign = textDataForCache.verticalAlign;
 }
 
 void CText::render () {
@@ -252,6 +340,17 @@ void CText::render () {
     GLint prevVao = 0;
     glGetIntegerv (GL_CURRENT_PROGRAM, &prevProgram);
     glGetIntegerv (GL_VERTEX_ARRAY_BINDING, &prevVao);
+
+    const GLboolean depthTestWas = glIsEnabled (GL_DEPTH_TEST);
+    const GLboolean cullFaceWas = glIsEnabled (GL_CULL_FACE);
+    GLboolean colorMaskWas[4] = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE };
+    glGetBooleanv (GL_COLOR_WRITEMASK, colorMaskWas);
+
+    // Image passes often leave GL_CULL_FACE on; our screen-space quads use winding that reads as "back"
+    // faces under the default CCW front rule, so the entire string would be culled.
+    glDisable (GL_DEPTH_TEST);
+    glDisable (GL_CULL_FACE);
+    glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -275,6 +374,18 @@ void CText::render () {
     glUniform4f (this->m_uColor, color.r, color.g, color.b, color.a);
 
     glDrawElements (GL_TRIANGLES, static_cast<GLsizei> (this->m_indices.size ()), GL_UNSIGNED_INT, nullptr);
+
+    glColorMask (colorMaskWas[0], colorMaskWas[1], colorMaskWas[2], colorMaskWas[3]);
+    if (depthTestWas) {
+        glEnable (GL_DEPTH_TEST);
+    } else {
+        glDisable (GL_DEPTH_TEST);
+    }
+    if (cullFaceWas) {
+        glEnable (GL_CULL_FACE);
+    } else {
+        glDisable (GL_CULL_FACE);
+    }
 
     glBindVertexArray (prevVao);
     glUseProgram (prevProgram);

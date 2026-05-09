@@ -1,5 +1,6 @@
 #pragma once
 
+#include <glm/vec3.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -43,6 +44,10 @@ private:
     std::string m_cachedText;
     float m_cachedSize = -1.0f;
     std::string m_cachedFont;
+    glm::vec3 m_cachedOrigin { 0.0f };
+    glm::vec3 m_cachedScale { 0.0f };
+    std::string m_cachedHorizontalAlign;
+    std::string m_cachedVerticalAlign;
     bool m_initialized = false;
 };
 } // namespace WallpaperEngine::Render::Objects

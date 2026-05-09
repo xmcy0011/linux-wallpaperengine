@@ -4,6 +4,8 @@
 #include "WallpaperEngine/Data/Model/ScriptedDynamicValue.h"
 #include "WallpaperEngine/Data/Model/UserSetting.h"
 
+#include <glm/glm.hpp>
+
 #include <cmath>
 #include <cstdlib>
 #include <sstream>
@@ -99,6 +101,27 @@ UserSettingUniquePtr UserSettingParser::parse (const json& data, const Propertie
     } else if (valueIt.is_null ()) {
         // null value with no connection to property
         value->update ();
+    } else if (valueIt.is_array ()) {
+        const auto n = valueIt.size ();
+        const auto num = [&] (size_t i) -> float {
+            if (i >= valueIt.size () || valueIt[i].is_null ()) {
+                return 0.0f;
+            }
+            if (valueIt[i].is_number_float ()) {
+                return valueIt[i].get<float> ();
+            }
+            if (valueIt[i].is_number_integer ()) {
+                return static_cast<float> (valueIt[i].get<int> ());
+            }
+            return 0.0f;
+        };
+        if (n == 2) {
+            value->update (glm::vec2 (num (0), num (1)));
+        } else if (n == 3) {
+            value->update (glm::vec3 (num (0), num (1), num (2)));
+        } else if (n >= 4) {
+            value->update (glm::vec4 (num (0), num (1), num (2), num (3)));
+        }
     }
 
     // If the setting has a script, wrap the base value in a ScriptedDynamicValue
