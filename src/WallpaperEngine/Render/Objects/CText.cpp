@@ -173,14 +173,15 @@ void CText::rebuildMeshIfNeeded () {
     const std::string content = this->m_text.text->value->getString ();
     const float fontSize = this->m_text.fontSize->value->getFloat ();
     const std::string fontPath = this->m_text.font->value->getString ();
-    const auto& textDataForCache = static_cast<const Data::Model::TextData&> (this->m_text);
-    const glm::vec3 originNow = textDataForCache.origin->value->getVec3 ();
+    glm::vec3 originNow = m_text.origin->value->getVec3 ();
     const glm::vec3 scaleNow = this->m_text.scale->value->getVec3 ();
 
+    if (m_text.parent.has_value ()) {
+        originNow += this->getScene ().getObject (m_text.parent.value ())->getObject ().origin->value->getVec3 ();
+    }
+
     if (content == this->m_cachedText && fontSize == this->m_cachedSize && fontPath == this->m_cachedFont
-        && originNow == this->m_cachedOrigin && scaleNow == this->m_cachedScale
-        && textDataForCache.horizontalAlign == this->m_cachedHorizontalAlign
-        && textDataForCache.verticalAlign == this->m_cachedVerticalAlign) {
+        && originNow == this->m_cachedOrigin) {
         return;
     }
 
@@ -207,9 +208,6 @@ void CText::rebuildMeshIfNeeded () {
         this->m_cachedSize = fontSize;
         this->m_cachedFont = fontPath;
         this->m_cachedOrigin = originNow;
-        this->m_cachedScale = scaleNow;
-        this->m_cachedHorizontalAlign = textDataForCache.horizontalAlign;
-        this->m_cachedVerticalAlign = textDataForCache.verticalAlign;
         return;
     }
 
@@ -220,8 +218,8 @@ void CText::rebuildMeshIfNeeded () {
     const float sceneW = static_cast<float> (this->getScene ().getWidth ());
     const float sceneH = static_cast<float> (this->getScene ().getHeight ());
 
-    const std::string hAlign = lowerAscii (textDataForCache.horizontalAlign);
-    const std::string vAlign = lowerAscii (textDataForCache.verticalAlign);
+    const std::string hAlign = lowerAscii (this->m_text.horizontalAlign);
+    const std::string vAlign = lowerAscii (this->m_text.verticalAlign);
 
     const std::u32string text32 = WallpaperEngine::Render::Text::utf8ToUtf32 (content);
     std::vector<std::u32string> lines;
@@ -317,9 +315,6 @@ void CText::rebuildMeshIfNeeded () {
     this->m_cachedSize = fontSize;
     this->m_cachedFont = fontPath;
     this->m_cachedOrigin = originNow;
-    this->m_cachedScale = scaleNow;
-    this->m_cachedHorizontalAlign = textDataForCache.horizontalAlign;
-    this->m_cachedVerticalAlign = textDataForCache.verticalAlign;
 }
 
 void CText::render () {

@@ -132,8 +132,6 @@ struct TextData {
     UserSettingUniquePtr font;
     /** the font size */
     UserSettingUniquePtr fontSize;
-    /** the start of the text, vec3 */
-    UserSettingUniquePtr origin;
     /** the visibility of the text */
     UserSettingUniquePtr visible;
     /** the color of the text, vec3/vec4 */

@@ -50,9 +50,6 @@ CScene::CScene (
 
     const uint32_t sceneWidth = this->m_camera->getWidth ();
     const uint32_t sceneHeight = this->m_camera->getHeight ();
-    WallpaperEngine::Scripting::ScriptEngine::instance ().setCanvasSize (
-        static_cast<float> (sceneWidth), static_cast<float> (sceneHeight)
-    );
 
     this->_rt_shadowAtlas = this->create (
         "_rt_shadowAtlas", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0, { sceneWidth, sceneHeight },
@@ -273,11 +270,6 @@ void CScene::addObjectToRenderOrder (const Object& object) {
 Camera& CScene::getCamera () const { return *this->m_camera; }
 
 void CScene::renderFrame (const glm::ivec4& viewport) {
-    // Keep engine.canvasSize in sync with actual scene size for scene scripts.
-    WallpaperEngine::Scripting::ScriptEngine::instance ().setCanvasSize (
-        static_cast<float> (this->getWidth ()), static_cast<float> (this->getHeight ())
-    );
-
     // ensure the virtual mouse position is up to date
     this->updateMouse (viewport);
 

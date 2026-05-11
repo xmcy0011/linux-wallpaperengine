@@ -5,6 +5,7 @@
 #include "WallpaperEngine/Data/Model/Wallpaper.h"
 #include "WallpaperEngine/FileSystem/Utf8Path.h"
 #include "WallpaperEngine/Logging/Log.h"
+#include "WallpaperEngine/Scripting/ScriptEngine.h"
 
 using namespace WallpaperEngine::Data::Parsers;
 using WallpaperEngine::FileSystem::string2wstring;
@@ -34,7 +35,7 @@ SceneUniquePtr WallpaperParser::parseScene (const JSON& file, Project& project) 
     // TODO: FIND IF THESE DEFAULTS ARE SENSIBLE OR NOT AND PERFORM PROPER VALIDATION WHEN CAMERA PREVIEW AND CAMERA
     // PARALLAX ARE PRESENT
 
-    return std::make_unique <Scene> (
+    auto sceneData = std::make_unique <Scene> (
         WallpaperData {
             .filename = "",
             .project = project
@@ -77,10 +78,18 @@ SceneUniquePtr WallpaperParser::parseScene (const JSON& file, Project& project) 
                     .farz = camera.optional <float> ("farz", 1000.0f),
                     .fov = camera.optional <float> ("fov", 50.0f)
                 }
-            },
-            .objects = parseObjects (objects, project),
+            }
         }
     );
+
+    // update scriptEngine CanvasSize, before parseObjects()
+    // so that objects can use it in their scriptproperties if needed
+    WallpaperEngine::Scripting::ScriptEngine::instance ().setCanvasSize (
+        sceneData->camera.projection.width, sceneData->camera.projection.height
+    );
+
+    sceneData->objects = parseObjects (objects, project);
+    return std::move (sceneData);
 }
 
 VideoUniquePtr WallpaperParser::parseVideo (const JSON& file, Project& project) {

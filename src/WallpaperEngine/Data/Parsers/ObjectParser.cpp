@@ -158,7 +158,6 @@ TextUniquePtr ObjectParser::parseText (const JSON& it, const Project& project, O
             .text = stringSetting ("text", ""),
             .font = stringSetting ("font", "fonts/NotoSans-Regular.ttf"),
             .fontSize = it.user ("pointsize", properties, 32.0f),
-            .origin = it.user("origin", properties, glm::vec3(0.0f)),
             .visible = it.user ("visible", properties, true),
             .color = it.user ("color", properties, glm::vec4 (1.0f)),
             .scale = it.user ("scale", properties, glm::vec3 (1.0f)),
