@@ -19,7 +19,7 @@ namespace {
 // Helper: Random float in range
 inline float randomFloat (std::mt19937& rng, float min, float max) {
     if (max < min) {
-	std::swap (min, max);
+        std::swap (min, max);
     }
     std::uniform_real_distribution<float> dist (min, max);
     return dist (rng);
@@ -28,7 +28,7 @@ inline float randomFloat (std::mt19937& rng, float min, float max) {
 // Helper: Random vec3 in range
 inline glm::vec3 randomVec3 (std::mt19937& rng, const glm::vec3& min, const glm::vec3& max) {
     return glm::vec3 (
-	randomFloat (rng, min.x, max.x), randomFloat (rng, min.y, max.y), randomFloat (rng, min.z, max.z)
+        randomFloat (rng, min.x, max.x), randomFloat (rng, min.y, max.y), randomFloat (rng, min.z, max.z)
     );
 }
 
@@ -38,12 +38,12 @@ inline float lerp (float t, float a, float b) { return a + t * (b - a); }
 // Helper: Fade value change over lifetime
 inline float fadeValue (float life, float startTime, float endTime, float startValue, float endValue) {
     if (life <= startTime) {
-	return startValue;
+        return startValue;
     } else if (life >= endTime) {
-	return endValue;
+        return endValue;
     } else {
-	float t = (life - startTime) / (endTime - startTime);
-	return lerp (t, startValue, endValue);
+        float t = (life - startTime) / (endTime - startTime);
+        return lerp (t, startValue, endValue);
     }
 }
 }
@@ -57,27 +57,27 @@ CParticle::CParticle (Wallpapers::CScene& scene, const Particle& particle) :
 
     // Read renderer configuration early to determine rendering mode
     if (!m_particle.renderers.empty ()) {
-	const auto& renderer = m_particle.renderers[0];
-	if (renderer.name == "rope" || renderer.name == "ropetrail") {
-	    // Both rope and ropetrail use genericropeparticle shader
-	    m_useRopeRenderer = true;
-	    m_ropeSubdivision = std::max (0, static_cast<int> (renderer.subdivision));
-	    m_ropeUVScale = renderer.uvScale;
-	    m_ropeUVScrolling = renderer.uvScrolling;
-	    m_ropeUVSmoothing = renderer.uvSmoothing;
+        const auto& renderer = m_particle.renderers[0];
+        if (renderer.name == "rope" || renderer.name == "ropetrail") {
+            // Both rope and ropetrail use genericropeparticle shader
+            m_useRopeRenderer = true;
+            m_ropeSubdivision = std::max (0, static_cast<int> (renderer.subdivision));
+            m_ropeUVScale = renderer.uvScale;
+            m_ropeUVScrolling = renderer.uvScrolling;
+            m_ropeUVSmoothing = renderer.uvSmoothing;
 
-	    if (renderer.name == "ropetrail") {
-		m_useTrailRenderer = true;
-		m_trailLength = renderer.length;
-		m_ropeSegments = std::max (2, static_cast<int> (renderer.segments));
-	    }
-	} else if (renderer.name == "spritetrail") {
-	    // spritetrail uses genericparticle with TRAILRENDERER combo
-	    m_useTrailRenderer = true;
-	    m_trailLength = renderer.length;
-	    m_trailMaxLength = renderer.maxLength;
-	    m_trailMinLength = renderer.minLength;
-	}
+            if (renderer.name == "ropetrail") {
+                m_useTrailRenderer = true;
+                m_trailLength = renderer.length;
+                m_ropeSegments = std::max (2, static_cast<int> (renderer.segments));
+            }
+        } else if (renderer.name == "spritetrail") {
+            // spritetrail uses genericparticle with TRAILRENDERER combo
+            m_useTrailRenderer = true;
+            m_trailLength = renderer.length;
+            m_trailMaxLength = renderer.maxLength;
+            m_trailMinLength = renderer.minLength;
+        }
     }
 
     // Apply count instance override to particle pool size
@@ -91,19 +91,19 @@ CParticle::CParticle (Wallpapers::CScene& scene, const Particle& particle) :
 
     // Calculate buffer sizes based on renderer type
     if (m_useRopeRenderer) {
-	// Rope: connects N particles with (N-1) segments, each subdivided into sub-segments
-	const int subdivision = std::max (1, m_ropeSubdivision);
-	const int maxSubSegments = std::max (1, static_cast<int> (m_maxParticles - 1)) * subdivision;
-	m_vertices.resize (maxSubSegments * 4 * ROPE_FLOATS_PER_VERTEX);
-	m_indices.resize (maxSubSegments * 6);
+        // Rope: connects N particles with (N-1) segments, each subdivided into sub-segments
+        const int subdivision = std::max (1, m_ropeSubdivision);
+        const int maxSubSegments = std::max (1, static_cast<int> (m_maxParticles - 1)) * subdivision;
+        m_vertices.resize (maxSubSegments * 4 * ROPE_FLOATS_PER_VERTEX);
+        m_indices.resize (maxSubSegments * 6);
     } else {
-	// Trail particles: (N+1) * 2 vertices for ribbon strip, N * 6 indices for N quads
-	// Normal particles: 4 vertices, 6 indices
-	const int verticesPerParticle = 4;
-	const int indicesPerParticle = 6;
+        // Trail particles: (N+1) * 2 vertices for ribbon strip, N * 6 indices for N quads
+        // Normal particles: 4 vertices, 6 indices
+        const int verticesPerParticle = 4;
+        const int indicesPerParticle = 6;
 
-	m_vertices.resize (m_maxParticles * verticesPerParticle * SPRITE_FLOATS_PER_VERTEX);
-	m_indices.resize (m_maxParticles * indicesPerParticle);
+        m_vertices.resize (m_maxParticles * verticesPerParticle * SPRITE_FLOATS_PER_VERTEX);
+        m_indices.resize (m_maxParticles * indicesPerParticle);
     }
 }
 
@@ -111,13 +111,13 @@ CParticle::~CParticle () {
     delete m_pass;
 
     if (m_vao != 0) {
-	glDeleteVertexArrays (1, &m_vao);
+        glDeleteVertexArrays (1, &m_vao);
     }
     if (m_vbo != 0) {
-	glDeleteBuffers (1, &m_vbo);
+        glDeleteBuffers (1, &m_vbo);
     }
     if (m_ebo != 0) {
-	glDeleteBuffers (1, &m_ebo);
+        glDeleteBuffers (1, &m_ebo);
     }
 
     m_vertices.clear ();
@@ -126,7 +126,7 @@ CParticle::~CParticle () {
 
 void CParticle::setup () {
     if (m_initialized) {
-	return;
+        return;
     }
 
     // Convert origin from screen space to centered space
@@ -142,13 +142,13 @@ void CParticle::setup () {
 
     // Load particle material constants
     if (m_particle.material && m_particle.material->material && !m_particle.material->material->passes.empty ()) {
-	auto& firstPass = *m_particle.material->material->passes.begin ();
+        auto& firstPass = *m_particle.material->material->passes.begin ();
 
-	// Read overbright constant (brightness multiplier for additive particles)
-	auto overbrightIt = firstPass->constants.find ("ui_editor_properties_overbright");
-	if (overbrightIt != firstPass->constants.end ()) {
-	    m_overbright = overbrightIt->second->value->getFloat ();
-	}
+        // Read overbright constant (brightness multiplier for additive particles)
+        auto overbrightIt = firstPass->constants.find ("ui_editor_properties_overbright");
+        if (overbrightIt != firstPass->constants.end ()) {
+            m_overbright = overbrightIt->second->value->getFloat ();
+        }
     }
 
     // Texture is resolved by CRenderable base class; read spritesheet data.
@@ -157,10 +157,10 @@ void CParticle::setup () {
     // GL texture per frame), the parser returns 0 cols/rows since a 1x1 grid can't hold
     // all frames — so no SPRITESHEET mode is needed (frame switching happens via texture ID).
     if (const auto texture = getTexture ()) {
-	m_spritesheetCols = static_cast<int> (texture->getSpritesheetCols ());
-	m_spritesheetRows = static_cast<int> (texture->getSpritesheetRows ());
-	m_spritesheetFrames = static_cast<int> (texture->getSpritesheetFrames ());
-	m_spritesheetDuration = texture->getSpritesheetDuration ();
+        m_spritesheetCols = static_cast<int> (texture->getSpritesheetCols ());
+        m_spritesheetRows = static_cast<int> (texture->getSpritesheetRows ());
+        m_spritesheetFrames = static_cast<int> (texture->getSpritesheetFrames ());
+        m_spritesheetDuration = texture->getSpritesheetDuration ();
     }
 
     setupEmitters ();
@@ -171,24 +171,24 @@ void CParticle::setup () {
     // Setup control points (max 8)
     m_controlPoints.resize (8);
     for (const auto& cp : m_particle.controlPoints) {
-	if (cp.id >= 0 && cp.id < 8) {
-	    m_controlPoints[cp.id].offset = cp.offset;
-	    // Link to mouse if either flags bit 0 is set
-	    m_controlPoints[cp.id].linkMouse = (cp.flags & 1) != 0;
-	    m_controlPoints[cp.id].worldSpace = (cp.flags & 2) != 0;
+        if (cp.id >= 0 && cp.id < 8) {
+            m_controlPoints[cp.id].offset = cp.offset;
+            // Link to mouse if either flags bit 0 is set
+            m_controlPoints[cp.id].linkMouse = (cp.flags & 1) != 0;
+            m_controlPoints[cp.id].worldSpace = (cp.flags & 2) != 0;
 
-	    // Initialize position to offset for non-mouse-linked control points
-	    // Mouse-linked CPs will have their position updated in update()
-	    if (!m_controlPoints[cp.id].linkMouse) {
-		if (m_controlPoints[cp.id].worldSpace) {
-		    // World space: offset is in screen-centered coords, convert to particle local space
-		    m_controlPoints[cp.id].position = cp.offset - m_transformedOrigin;
-		} else {
-		    // Local space: offset is already relative to particle system center
-		    m_controlPoints[cp.id].position = cp.offset;
-		}
-	    }
-	}
+            // Initialize position to offset for non-mouse-linked control points
+            // Mouse-linked CPs will have their position updated in update()
+            if (!m_controlPoints[cp.id].linkMouse) {
+                if (m_controlPoints[cp.id].worldSpace) {
+                    // World space: offset is in screen-centered coords, convert to particle local space
+                    m_controlPoints[cp.id].position = cp.offset - m_transformedOrigin;
+                } else {
+                    // Local space: offset is already relative to particle system center
+                    m_controlPoints[cp.id].position = cp.offset;
+                }
+            }
+        }
     }
 
     m_initialized = true;
@@ -196,20 +196,20 @@ void CParticle::setup () {
 
 void CParticle::render () {
     if (!m_initialized || !m_particle.visible->value->getBool ()) {
-	return;
+        return;
     }
 
     // Initialize time on first render to avoid huge dt spike
     if (m_time == 0.0) {
-	m_time = g_Time;
-	// Skip update on first frame to avoid weird initial burst
-	// This ensures all particles start from a clean state
-	if (m_useRopeRenderer) {
-	    renderRope ();
-	} else {
-	    renderSprites ();
-	}
-	return;
+        m_time = g_Time;
+        // Skip update on first frame to avoid weird initial burst
+        // This ensures all particles start from a clean state
+        if (m_useRopeRenderer) {
+            renderRope ();
+        } else {
+            renderSprites ();
+        }
+        return;
     }
 
     // Update particles
@@ -217,19 +217,19 @@ void CParticle::render () {
     m_time = g_Time;
 
     if (dt > 0.0f) {
-	// Cap dt to prevent simulation instability
-	// Also provides more consistent behavior across different FPS
-	dt = std::min (dt, 0.1f);
-	update (dt);
+        // Cap dt to prevent simulation instability
+        // Also provides more consistent behavior across different FPS
+        dt = std::min (dt, 0.1f);
+        update (dt);
     }
 
     // Render particles
     if (m_particleCount > 0 && m_particle.material) {
-	if (m_useRopeRenderer) {
-	    renderRope ();
-	} else {
-	    renderSprites ();
-	}
+        if (m_useRopeRenderer) {
+            renderRope ();
+        } else {
+            renderSprites ();
+        }
     }
 }
 
@@ -239,94 +239,94 @@ void CParticle::update (float dt) {
     float screenHeight = static_cast<float> (getScene ().getHeight ());
 
     if (screenWidth != m_lastScreenWidth || screenHeight != m_lastScreenHeight) {
-	// Resolution changed - recalculate transformed origin
-	glm::vec3 origin = m_particle.origin->value->getVec3 ();
-	origin.x -= screenWidth / 2.0f;
-	origin.y = screenHeight / 2.0f - origin.y;
-	m_transformedOrigin = origin;
+        // Resolution changed - recalculate transformed origin
+        glm::vec3 origin = m_particle.origin->value->getVec3 ();
+        origin.x -= screenWidth / 2.0f;
+        origin.y = screenHeight / 2.0f - origin.y;
+        m_transformedOrigin = origin;
 
-	// Update world-space control points that aren't mouse-linked
-	for (size_t i = 0; i < m_controlPoints.size (); i++) {
-	    auto& cp = m_controlPoints[i];
-	    if (!cp.linkMouse && cp.worldSpace) {
-		// Recalculate position from offset using new transformed origin
-		cp.position = cp.offset - m_transformedOrigin;
-	    }
-	}
+        // Update world-space control points that aren't mouse-linked
+        for (size_t i = 0; i < m_controlPoints.size (); i++) {
+            auto& cp = m_controlPoints[i];
+            if (!cp.linkMouse && cp.worldSpace) {
+                // Recalculate position from offset using new transformed origin
+                cp.position = cp.offset - m_transformedOrigin;
+            }
+        }
 
-	m_lastScreenWidth = screenWidth;
-	m_lastScreenHeight = screenHeight;
+        m_lastScreenWidth = screenWidth;
+        m_lastScreenHeight = screenHeight;
     }
 
     // Update control points with mouse position
     const glm::vec2* mousePos = getScene ().getMousePositionNormalized ();
     if (mousePos) {
 
-	for (auto& cp : m_controlPoints) {
-	    if (cp.linkMouse) {
-		// Convert mouse position from normalized [0,1] to centered screen space
-		glm::vec3 position;
-		position.x = (mousePos->x * screenWidth) - (screenWidth / 2.0f);
-		position.y = (screenHeight / 2.0f) - (mousePos->y * screenHeight);
-		position.z = 0.0f;
+        for (auto& cp : m_controlPoints) {
+            if (cp.linkMouse) {
+                // Convert mouse position from normalized [0,1] to centered screen space
+                glm::vec3 position;
+                position.x = (mousePos->x * screenWidth) - (screenWidth / 2.0f);
+                position.y = (screenHeight / 2.0f) - (mousePos->y * screenHeight);
+                position.z = 0.0f;
 
-		// Apply control point offset
-		position += cp.offset;
+                // Apply control point offset
+                position += cp.offset;
 
-		// Convert to particle local space to prevent double transformation by model matrix
-		// Both world-space and local-space CPs are handled the same way now
-		cp.position = position - m_transformedOrigin;
-	    }
-	}
+                // Convert to particle local space to prevent double transformation by model matrix
+                // Both world-space and local-space CPs are handled the same way now
+                cp.position = position - m_transformedOrigin;
+            }
+        }
     }
 
     // Emit particles
     for (auto& emitter : m_emitters) {
-	emitter (m_particles, m_particleCount, dt);
+        emitter (m_particles, m_particleCount, dt);
     }
 
     // Update particle age
     for (uint32_t i = 0; i < m_particleCount; i++) {
-	m_particles[i].age += dt;
+        m_particles[i].age += dt;
     }
 
     // Apply operators to living particles (including alphafade)
     for (auto& op : m_operators) {
-	op (m_particles, m_particleCount, m_controlPoints, static_cast<float> (m_time), dt);
+        op (m_particles, m_particleCount, m_controlPoints, static_cast<float> (m_time), dt);
     }
 
     // Update animation frames
     for (uint32_t i = 0; i < m_particleCount; i++) {
-	auto& p = m_particles[i];
+        auto& p = m_particles[i];
 
-	if (m_spritesheetFrames > 0) {
-	    float lifetimePos = p.getLifetimePos ();
-	    float animSpeed = m_particle.sequenceMultiplier > 0.0f ? m_particle.sequenceMultiplier : 1.0f;
+        if (m_spritesheetFrames > 0) {
+            float lifetimePos = p.getLifetimePos ();
+            float animSpeed = m_particle.sequenceMultiplier > 0.0f ? m_particle.sequenceMultiplier : 1.0f;
 
-	    if (m_particle.animationMode == "randomframe") {
-		if (p.frame < 0.0f) {
-		    std::mt19937 particleRng (
-			static_cast<std::mt19937::result_type> (reinterpret_cast<uintptr_t> (&p))
-		    );
-		    std::uniform_int_distribution<int> dist (0, m_spritesheetFrames - 1);
-		    p.frame = static_cast<float> (dist (particleRng));
-		}
-	    } else if (m_particle.animationMode == "once") {
-		p.frame = std::min (
-		    lifetimePos * m_spritesheetFrames * animSpeed, static_cast<float> (m_spritesheetFrames - 1)
-		);
-	    } else {
-		if (m_spritesheetDuration > 0.0f) {
-		    float timeInCycle = std::fmod (p.age * animSpeed, m_spritesheetDuration);
-		    float cyclePos = timeInCycle / m_spritesheetDuration;
-		    p.frame = std::fmod (cyclePos * m_spritesheetFrames, static_cast<float> (m_spritesheetFrames));
-		} else {
-		    p.frame = std::fmod (
-			lifetimePos * m_spritesheetFrames * animSpeed, static_cast<float> (m_spritesheetFrames)
-		    );
-		}
-	    }
-	}
+            if (m_particle.animationMode == "randomframe") {
+                if (p.frame < 0.0f) {
+                    std::mt19937 particleRng (
+                        static_cast<std::mt19937::result_type> (reinterpret_cast<uintptr_t> (&p))
+                    );
+                    std::uniform_int_distribution<int> dist (0, m_spritesheetFrames - 1);
+                    p.frame = static_cast<float> (dist (particleRng));
+                }
+            } else if (m_particle.animationMode == "once") {
+                p.frame = std::min (
+                    lifetimePos * m_spritesheetFrames * animSpeed, static_cast<float> (m_spritesheetFrames - 1)
+                );
+            } else {
+                if (m_spritesheetDuration > 0.0f) {
+                    float timeInCycle = std::fmod (p.age * animSpeed, m_spritesheetDuration);
+                    float cyclePos = timeInCycle / m_spritesheetDuration;
+                    p.frame = std::fmod (cyclePos * m_spritesheetFrames, static_cast<float> (m_spritesheetFrames));
+                } else {
+                    p.frame = std::fmod (
+                        lifetimePos * m_spritesheetFrames * animSpeed, static_cast<float> (m_spritesheetFrames)
+                    );
+                }
+            }
+        }
     }
 
     // Remove dead particles with order-preserving compaction.
@@ -335,12 +335,12 @@ void CParticle::update (float dt) {
     // Compaction preserves spawn order so array index 0 is always the oldest particle.
     uint32_t writeIdx = 0;
     for (uint32_t readIdx = 0; readIdx < m_particleCount; readIdx++) {
-	if (m_particles[readIdx].isAlive ()) {
-	    if (writeIdx != readIdx) {
-		m_particles[writeIdx] = m_particles[readIdx];
-	    }
-	    writeIdx++;
-	}
+        if (m_particles[readIdx].isAlive ()) {
+            if (writeIdx != readIdx) {
+                m_particles[writeIdx] = m_particles[readIdx];
+            }
+            writeIdx++;
+        }
     }
     m_particleCount = writeIdx;
 }
@@ -356,7 +356,7 @@ const float& CParticle::getAlpha () const { return m_particle.instanceOverride.a
 const glm::vec3& CParticle::getColor () const {
     static const glm::vec3 defaultColor (1.0f);
     if (m_particle.instanceOverride.color && m_particle.instanceOverride.color->value) {
-	return m_particle.instanceOverride.color->value->getVec3 ();
+        return m_particle.instanceOverride.color->value->getVec3 ();
     }
     return defaultColor;
 }
@@ -364,7 +364,7 @@ const glm::vec3& CParticle::getColor () const {
 const glm::vec4& CParticle::getColor4 () const {
     static const glm::vec4 defaultColor (1.0f);
     if (m_particle.instanceOverride.color && m_particle.instanceOverride.color->value) {
-	return m_particle.instanceOverride.color->value->getVec4 ();
+        return m_particle.instanceOverride.color->value->getVec4 ();
     }
     return defaultColor;
 }
@@ -375,20 +375,20 @@ const glm::vec3& CParticle::getCompositeColor () const { return getColor (); }
 
 void CParticle::setupEmitters () {
     for (const auto& emitter : m_particle.emitters) {
-	EmitterFunc func;
+        EmitterFunc func;
 
-	if (emitter.name == "boxrandom") {
-	    func = createBoxEmitter (emitter);
-	} else if (emitter.name == "sphererandom") {
-	    func = createSphereEmitter (emitter);
-	} else {
-	    sLog.out ("Unknown emitter type: ", emitter.name);
-	    continue;
-	}
+        if (emitter.name == "boxrandom") {
+            func = createBoxEmitter (emitter);
+        } else if (emitter.name == "sphererandom") {
+            func = createSphereEmitter (emitter);
+        } else {
+            sLog.out ("Unknown emitter type: ", emitter.name);
+            continue;
+        }
 
-	if (func) {
-	    m_emitters.push_back (std::move (func));
-	}
+        if (func) {
+            m_emitters.push_back (std::move (func));
+        }
     }
 }
 
@@ -400,10 +400,10 @@ EmitterFunc CParticle::createBoxEmitter (const ParticleEmitter& emitter) {
 
     int controlPointIndex = emitter.controlPoint;
     if (controlPointIndex == -1 && !m_particle.controlPoints.empty ()) {
-	const auto& cp0 = m_particle.controlPoints[0];
-	if ((cp0.flags & 1) != 0) {
-	    controlPointIndex = 0;
-	}
+        const auto& cp0 = m_particle.controlPoints[0];
+        if ((cp0.flags & 1) != 0) {
+            controlPointIndex = 0;
+        }
     }
 
     glm::vec3 flippedDirections = emitter.directions;
@@ -413,132 +413,132 @@ EmitterFunc CParticle::createBoxEmitter (const ParticleEmitter& emitter) {
     bool randomPeriodicEmission = (emitter.flags & 4) != 0;
 
     return [this, emitter, transformedEmitterOrigin, controlPointIndex, rate, flippedDirections, limitOnePerFrame,
-	    randomPeriodicEmission, emissionTimer = 0.0f, elapsedTime = 0.0f, delayTimer = emitter.delay,
-	    durationTimer = 0.0f, periodicTimer = 0.0f, periodicDuration = 0.0f, periodicDelay = 0.0f, emitting = false,
-	    instantaneousEmitted
-	    = false] (std::vector<ParticleInstance>& particles, uint32_t& count, float dt) mutable {
-	if (count >= particles.size ()) {
-	    return;
-	}
+            randomPeriodicEmission, emissionTimer = 0.0f, elapsedTime = 0.0f, delayTimer = emitter.delay,
+            durationTimer = 0.0f, periodicTimer = 0.0f, periodicDuration = 0.0f, periodicDelay = 0.0f, emitting = false,
+            instantaneousEmitted
+            = false] (std::vector<ParticleInstance>& particles, uint32_t& count, float dt) mutable {
+        if (count >= particles.size ()) {
+            return;
+        }
 
-	elapsedTime += dt;
+        elapsedTime += dt;
 
-	// Handle delay
-	if (delayTimer > 0.0f) {
-	    delayTimer -= dt;
-	    return;
-	}
+        // Handle delay
+        if (delayTimer > 0.0f) {
+            delayTimer -= dt;
+            return;
+        }
 
-	// Handle duration
-	if (emitter.duration > 0.0f) {
-	    durationTimer += dt;
-	    if (durationTimer >= emitter.duration) {
-		return;
-	    }
-	}
+        // Handle duration
+        if (emitter.duration > 0.0f) {
+            durationTimer += dt;
+            if (durationTimer >= emitter.duration) {
+                return;
+            }
+        }
 
-	// Handle random periodic emission
-	if (randomPeriodicEmission) {
-	    periodicTimer += dt;
+        // Handle random periodic emission
+        if (randomPeriodicEmission) {
+            periodicTimer += dt;
 
-	    if (!emitting) {
-		if (periodicTimer >= periodicDelay) {
-		    emitting = true;
-		    periodicTimer = 0.0f;
-		    periodicDuration = randomFloat (m_rng, emitter.minPeriodicDuration, emitter.maxPeriodicDuration);
-		} else {
-		    return;
-		}
-	    } else {
-		if (periodicTimer >= periodicDuration) {
-		    emitting = false;
-		    periodicTimer = 0.0f;
-		    periodicDelay = randomFloat (m_rng, emitter.minPeriodicDelay, emitter.maxPeriodicDelay);
-		    return;
-		}
-	    }
-	}
+            if (!emitting) {
+                if (periodicTimer >= periodicDelay) {
+                    emitting = true;
+                    periodicTimer = 0.0f;
+                    periodicDuration = randomFloat (m_rng, emitter.minPeriodicDuration, emitter.maxPeriodicDuration);
+                } else {
+                    return;
+                }
+            } else {
+                if (periodicTimer >= periodicDuration) {
+                    emitting = false;
+                    periodicTimer = 0.0f;
+                    periodicDelay = randomFloat (m_rng, emitter.minPeriodicDelay, emitter.maxPeriodicDelay);
+                    return;
+                }
+            }
+        }
 
-	// TODO: Audio processing (audioProcessingMode, audioProcessingBounds, etc.)
+        // TODO: Audio processing (audioProcessingMode, audioProcessingBounds, etc.)
 
-	// Handle instantaneous emission
-	uint32_t toEmit = 0;
-	if (emitter.instantaneous > 0 && !instantaneousEmitted) {
-	    toEmit = emitter.instantaneous;
-	    instantaneousEmitted = true;
-	}
+        // Handle instantaneous emission
+        uint32_t toEmit = 0;
+        if (emitter.instantaneous > 0 && !instantaneousEmitted) {
+            toEmit = emitter.instantaneous;
+            instantaneousEmitted = true;
+        }
 
-	// Rate-based emission with optional cap at 1 per frame
-	if (emitter.rate > 0.0f) {
-	    emissionTimer += dt * rate;
-	    uint32_t rateEmit = static_cast<uint32_t> (emissionTimer);
-	    emissionTimer -= static_cast<float> (rateEmit);
-	    // limitOnePerFrame (flags bit 1): cap at 1 to prevent rope artifacts
-	    if (limitOnePerFrame && rateEmit > 1) {
-		rateEmit = 1;
-	    }
-	    toEmit += rateEmit;
-	}
+        // Rate-based emission with optional cap at 1 per frame
+        if (emitter.rate > 0.0f) {
+            emissionTimer += dt * rate;
+            uint32_t rateEmit = static_cast<uint32_t> (emissionTimer);
+            emissionTimer -= static_cast<float> (rateEmit);
+            // limitOnePerFrame (flags bit 1): cap at 1 to prevent rope artifacts
+            if (limitOnePerFrame && rateEmit > 1) {
+                rateEmit = 1;
+            }
+            toEmit += rateEmit;
+        }
 
-	// Emit particles
-	for (uint32_t i = 0; i < toEmit && count < particles.size (); i++) {
-	    auto& p = particles[count];
+        // Emit particles
+        for (uint32_t i = 0; i < toEmit && count < particles.size (); i++) {
+            auto& p = particles[count];
 
-	    glm::vec3 spawnOrigin = transformedEmitterOrigin;
-	    if (controlPointIndex >= 0 && controlPointIndex < static_cast<int> (m_controlPoints.size ())) {
-		spawnOrigin += m_controlPoints[controlPointIndex].position;
-	    }
+            glm::vec3 spawnOrigin = transformedEmitterOrigin;
+            if (controlPointIndex >= 0 && controlPointIndex < static_cast<int> (m_controlPoints.size ())) {
+                spawnOrigin += m_controlPoints[controlPointIndex].position;
+            }
 
-	    // Generate random position within box volume centered on origin
-	    // This creates a centered box (or hollow box if distanceMin > 0)
-	    glm::vec3 randomPos;
-	    for (int axis = 0; axis < 3; axis++) {
-		float minDist = emitter.distanceMin[axis];
-		float maxDist = emitter.distanceMax[axis];
-		// Generate value in [minDist, maxDist]
-		float dist = randomFloat (m_rng, minDist, maxDist);
-		// Randomly flip sign to center the distribution
-		if (randomFloat (m_rng, 0.0f, 1.0f) < 0.5f) {
-		    dist = -dist;
-		}
-		randomPos[axis] = dist;
-	    }
-	    randomPos *= flippedDirections;
+            // Generate random position within box volume centered on origin
+            // This creates a centered box (or hollow box if distanceMin > 0)
+            glm::vec3 randomPos;
+            for (int axis = 0; axis < 3; axis++) {
+                float minDist = emitter.distanceMin[axis];
+                float maxDist = emitter.distanceMax[axis];
+                // Generate value in [minDist, maxDist]
+                float dist = randomFloat (m_rng, minDist, maxDist);
+                // Randomly flip sign to center the distribution
+                if (randomFloat (m_rng, 0.0f, 1.0f) < 0.5f) {
+                    dist = -dist;
+                }
+                randomPos[axis] = dist;
+            }
+            randomPos *= flippedDirections;
 
-	    p.position = spawnOrigin + randomPos;
+            p.position = spawnOrigin + randomPos;
 
-	    // Emitter does not set velocity - initializers handle that
-	    p.velocity = glm::vec3 (0.0f);
-	    p.acceleration = glm::vec3 (0.0f);
-	    p.rotation = glm::vec3 (0.0f);
-	    p.angularVelocity = glm::vec3 (0.0f);
-	    p.angularAcceleration = glm::vec3 (0.0f);
+            // Emitter does not set velocity - initializers handle that
+            p.velocity = glm::vec3 (0.0f);
+            p.acceleration = glm::vec3 (0.0f);
+            p.rotation = glm::vec3 (0.0f);
+            p.angularVelocity = glm::vec3 (0.0f);
+            p.angularAcceleration = glm::vec3 (0.0f);
 
-	    p.color = glm::vec3 (1.0f) * m_particle.instanceOverride.colorn->value->getVec3 ();
-	    p.alpha = 1.0f * m_particle.instanceOverride.alpha->value->getFloat ();
-	    p.size = 20.0f * m_particle.instanceOverride.size->value->getFloat ();
-	    p.lifetime = 1.0f * m_particle.instanceOverride.lifetime->value->getFloat ();
-	    p.age = 0.0f;
-	    p.alive = true;
-	    p.frame = -1.0f;
+            p.color = glm::vec3 (1.0f) * m_particle.instanceOverride.colorn->value->getVec3 ();
+            p.alpha = 1.0f * m_particle.instanceOverride.alpha->value->getFloat ();
+            p.size = 20.0f * m_particle.instanceOverride.size->value->getFloat ();
+            p.lifetime = 1.0f * m_particle.instanceOverride.lifetime->value->getFloat ();
+            p.age = 0.0f;
+            p.alive = true;
+            p.frame = -1.0f;
 
-	    p.initial.color = p.color;
-	    p.initial.alpha = p.alpha;
-	    p.initial.size = p.size;
-	    p.initial.lifetime = p.lifetime;
+            p.initial.color = p.color;
+            p.initial.alpha = p.alpha;
+            p.initial.size = p.size;
+            p.initial.lifetime = p.lifetime;
 
-	    // Reset oscillator state for reused particles
-	    p.oscillateAlpha = {};
-	    p.oscillateSize = {};
-	    p.oscillatePosition = {};
+            // Reset oscillator state for reused particles
+            p.oscillateAlpha = {};
+            p.oscillateSize = {};
+            p.oscillatePosition = {};
 
-	    // Apply initializers
-	    for (auto& init : m_initializers) {
-		init (p);
-	    }
+            // Apply initializers
+            for (auto& init : m_initializers) {
+                init (p);
+            }
 
-	    count++;
-	}
+            count++;
+        }
     };
 }
 
@@ -554,10 +554,10 @@ EmitterFunc CParticle::createSphereEmitter (const ParticleEmitter& emitter) {
 
     // Auto-detect control point 0 usage if controlPoint field not specified and CP0 has linkMouse
     if (controlPointIndex == -1 && !m_particle.controlPoints.empty ()) {
-	const auto& cp0 = m_particle.controlPoints[0];
-	if ((cp0.flags & 1) != 0) { // Bit 0: linkMouse flag
-	    controlPointIndex = 0;
-	}
+        const auto& cp0 = m_particle.controlPoints[0];
+        if ((cp0.flags & 1) != 0) { // Bit 0: linkMouse flag
+            controlPointIndex = 0;
+        }
     }
 
     bool limitOnePerFrame = (emitter.flags & 2) != 0;
@@ -565,128 +565,128 @@ EmitterFunc CParticle::createSphereEmitter (const ParticleEmitter& emitter) {
     std::string particleName = m_particle.name;
 
     return [this, emitter, transformedEmitterOrigin, controlPointIndex, rate, lifetime, limitOnePerFrame, isRope,
-	    particleName, emissionTimer = 0.0f, remaining = emitter.instantaneous, lastSpawnTime = -1.0f,
-	    noEmitFrames = 0u] (std::vector<ParticleInstance>& particles, uint32_t& count, float dt) mutable {
-	if (count >= particles.size ()) {
-	    return;
-	}
+            particleName, emissionTimer = 0.0f, remaining = emitter.instantaneous, lastSpawnTime = -1.0f,
+            noEmitFrames = 0u] (std::vector<ParticleInstance>& particles, uint32_t& count, float dt) mutable {
+        if (count >= particles.size ()) {
+            return;
+        }
 
-	// Rate-based emission with optional cap at 1 per frame
-	emissionTimer += dt * rate;
-	uint32_t toEmit = static_cast<uint32_t> (emissionTimer);
-	emissionTimer -= static_cast<float> (toEmit);
-	// limitOnePerFrame (flags bit 1): cap at 1 to prevent rope artifacts
-	if (limitOnePerFrame && toEmit > 1) {
-	    toEmit = 1;
-	}
+        // Rate-based emission with optional cap at 1 per frame
+        emissionTimer += dt * rate;
+        uint32_t toEmit = static_cast<uint32_t> (emissionTimer);
+        emissionTimer -= static_cast<float> (toEmit);
+        // limitOnePerFrame (flags bit 1): cap at 1 to prevent rope artifacts
+        if (limitOnePerFrame && toEmit > 1) {
+            toEmit = 1;
+        }
 
-	if (remaining > 0) {
-	    toEmit = remaining;
-	    remaining = 0;
-	}
+        if (remaining > 0) {
+            toEmit = remaining;
+            remaining = 0;
+        }
 
-	for (uint32_t i = 0; i < toEmit && count < particles.size (); i++) {
-	    auto& p = particles[count];
+        for (uint32_t i = 0; i < toEmit && count < particles.size (); i++) {
+            auto& p = particles[count];
 
-	    // Determine spawn origin (control point or emitter origin)
-	    glm::vec3 spawnOrigin = transformedEmitterOrigin;
-	    if (controlPointIndex >= 0 && controlPointIndex < static_cast<int> (m_controlPoints.size ())) {
-		spawnOrigin += m_controlPoints[controlPointIndex].position;
-	    }
+            // Determine spawn origin (control point or emitter origin)
+            glm::vec3 spawnOrigin = transformedEmitterOrigin;
+            if (controlPointIndex >= 0 && controlPointIndex < static_cast<int> (m_controlPoints.size ())) {
+                spawnOrigin += m_controlPoints[controlPointIndex].position;
+            }
 
-	    // Spawn at random position on ellipsoid surface
-	    glm::vec3 randomPos;
+            // Spawn at random position on ellipsoid surface
+            glm::vec3 randomPos;
 
-	    // Orthographic particles (flags & 4 == 0): use 2D disk distribution in X/Y plane
-	    // Perspective particles (flags & 4 != 0): use 3D spherical shell distribution
-	    if ((m_particle.flags & 4) == 0) {
-		// 2D disk distribution with random Z offset
-		float angle = randomFloat (m_rng, 0.0f, glm::two_pi<float> ());
-		float minRadius = emitter.distanceMin.x;
-		float maxRadius = emitter.distanceMax.x;
+            // Orthographic particles (flags & 4 == 0): use 2D disk distribution in X/Y plane
+            // Perspective particles (flags & 4 != 0): use 3D spherical shell distribution
+            if ((m_particle.flags & 4) == 0) {
+                // 2D disk distribution with random Z offset
+                float angle = randomFloat (m_rng, 0.0f, glm::two_pi<float> ());
+                float minRadius = emitter.distanceMin.x;
+                float maxRadius = emitter.distanceMax.x;
 
-		// Use sqrt for uniform area distribution in annulus
-		float minRadiusSq = minRadius * minRadius;
-		float maxRadiusSq = maxRadius * maxRadius;
-		float radiusXY = std::sqrt (randomFloat (m_rng, minRadiusSq, maxRadiusSq));
+                // Use sqrt for uniform area distribution in annulus
+                float minRadiusSq = minRadius * minRadius;
+                float maxRadiusSq = maxRadius * maxRadius;
+                float radiusXY = std::sqrt (randomFloat (m_rng, minRadiusSq, maxRadiusSq));
 
-		randomPos = glm::vec3 (
-		    radiusXY * std::cos (angle), radiusXY * std::sin (angle), randomFloat (m_rng, -maxRadius, maxRadius)
-		);
+                randomPos = glm::vec3 (
+                    radiusXY * std::cos (angle), radiusXY * std::sin (angle), randomFloat (m_rng, -maxRadius, maxRadius)
+                );
 
-		randomPos *= emitter.directions;
-	    } else {
-		// 3D spherical shell distribution
-		float theta = randomFloat (m_rng, 0.0f, glm::two_pi<float> ());
-		float cosTheta = randomFloat (m_rng, -1.0f, 1.0f);
-		float sinTheta = std::sqrt (1.0f - cosTheta * cosTheta);
+                randomPos *= emitter.directions;
+            } else {
+                // 3D spherical shell distribution
+                float theta = randomFloat (m_rng, 0.0f, glm::two_pi<float> ());
+                float cosTheta = randomFloat (m_rng, -1.0f, 1.0f);
+                float sinTheta = std::sqrt (1.0f - cosTheta * cosTheta);
 
-		randomPos = glm::vec3 (sinTheta * std::cos (theta), sinTheta * std::sin (theta), cosTheta);
+                randomPos = glm::vec3 (sinTheta * std::cos (theta), sinTheta * std::sin (theta), cosTheta);
 
-		// Use cubic root for uniform volume distribution
-		float minRadius = emitter.distanceMin.x;
-		float maxRadius = emitter.distanceMax.x;
-		float minRadiusCubed = minRadius * minRadius * minRadius;
-		float maxRadiusCubed = maxRadius * maxRadius * maxRadius;
-		float radius = std::cbrt (randomFloat (m_rng, minRadiusCubed, maxRadiusCubed));
+                // Use cubic root for uniform volume distribution
+                float minRadius = emitter.distanceMin.x;
+                float maxRadius = emitter.distanceMax.x;
+                float minRadiusCubed = minRadius * minRadius * minRadius;
+                float maxRadiusCubed = maxRadius * maxRadius * maxRadius;
+                float radius = std::cbrt (randomFloat (m_rng, minRadiusCubed, maxRadiusCubed));
 
-		randomPos *= radius;
-		randomPos *= emitter.directions;
-	    }
+                randomPos *= radius;
+                randomPos *= emitter.directions;
+            }
 
-	    // Apply sign property to force positive/negative values per axis
-	    // 0 = both, 1 = positive only, -1 = negative only
-	    for (int i = 0; i < 3; i++) {
-		if (emitter.sign[i] == 1) {
-		    randomPos[i] = std::abs (randomPos[i]); // Force positive
-		} else if (emitter.sign[i] == -1) {
-		    randomPos[i] = -std::abs (randomPos[i]); // Force negative
-		}
-		// If sign[i] == 0, leave as-is (both positive and negative possible)
-	    }
-	    p.position = spawnOrigin + randomPos;
+            // Apply sign property to force positive/negative values per axis
+            // 0 = both, 1 = positive only, -1 = negative only
+            for (int i = 0; i < 3; i++) {
+                if (emitter.sign[i] == 1) {
+                    randomPos[i] = std::abs (randomPos[i]); // Force positive
+                } else if (emitter.sign[i] == -1) {
+                    randomPos[i] = -std::abs (randomPos[i]); // Force negative
+                }
+                // If sign[i] == 0, leave as-is (both positive and negative possible)
+            }
+            p.position = spawnOrigin + randomPos;
 
-	    // Set velocity only if emitter specifies speed (otherwise use initializers)
-	    if (emitter.speedMax > 0.0f || emitter.speedMin != 0.0f) {
-		// Velocity pointing outward from ellipsoid (randomPos already includes directions scaling)
-		glm::vec3 direction
-		    = glm::length (randomPos) > 0.0f ? glm::normalize (randomPos) : glm::vec3 (0.0f, 1.0f, 0.0f);
-		float speed = randomFloat (m_rng, emitter.speedMin, emitter.speedMax);
-		p.velocity = direction * speed;
-	    } else {
-		// No emitter speed specified, velocity will be set by initializers
-		p.velocity = glm::vec3 (0.0f);
-	    }
+            // Set velocity only if emitter specifies speed (otherwise use initializers)
+            if (emitter.speedMax > 0.0f || emitter.speedMin != 0.0f) {
+                // Velocity pointing outward from ellipsoid (randomPos already includes directions scaling)
+                glm::vec3 direction
+                    = glm::length (randomPos) > 0.0f ? glm::normalize (randomPos) : glm::vec3 (0.0f, 1.0f, 0.0f);
+                float speed = randomFloat (m_rng, emitter.speedMin, emitter.speedMax);
+                p.velocity = direction * speed;
+            } else {
+                // No emitter speed specified, velocity will be set by initializers
+                p.velocity = glm::vec3 (0.0f);
+            }
 
-	    p.acceleration = glm::vec3 (0.0f);
-	    p.rotation = glm::vec3 (0.0f);
-	    p.angularVelocity = glm::vec3 (0.0f);
-	    p.angularAcceleration = glm::vec3 (0.0f);
+            p.acceleration = glm::vec3 (0.0f);
+            p.rotation = glm::vec3 (0.0f);
+            p.angularVelocity = glm::vec3 (0.0f);
+            p.angularAcceleration = glm::vec3 (0.0f);
 
-	    p.color = glm::vec3 (1.0f) * m_particle.instanceOverride.colorn->value->getVec3 ();
-	    p.alpha = 1.0f * m_particle.instanceOverride.alpha->value->getFloat ();
-	    p.size = 20.0f * m_particle.instanceOverride.size->value->getFloat ();
-	    p.lifetime = lifetime;
-	    p.age = 0.0f;
-	    p.alive = true;
-	    p.frame = -1.0f;
+            p.color = glm::vec3 (1.0f) * m_particle.instanceOverride.colorn->value->getVec3 ();
+            p.alpha = 1.0f * m_particle.instanceOverride.alpha->value->getFloat ();
+            p.size = 20.0f * m_particle.instanceOverride.size->value->getFloat ();
+            p.lifetime = lifetime;
+            p.age = 0.0f;
+            p.alive = true;
+            p.frame = -1.0f;
 
-	    p.initial.color = p.color;
-	    p.initial.alpha = p.alpha;
-	    p.initial.size = p.size;
-	    p.initial.lifetime = p.lifetime;
+            p.initial.color = p.color;
+            p.initial.alpha = p.alpha;
+            p.initial.size = p.size;
+            p.initial.lifetime = p.lifetime;
 
-	    // Reset oscillator state for reused particles
-	    p.oscillateAlpha = {};
-	    p.oscillateSize = {};
-	    p.oscillatePosition = {};
+            // Reset oscillator state for reused particles
+            p.oscillateAlpha = {};
+            p.oscillateSize = {};
+            p.oscillatePosition = {};
 
-	    for (auto& init : m_initializers) {
-		init (p);
-	    }
+            for (auto& init : m_initializers) {
+                init (p);
+            }
 
-	    count++;
-	}
+            count++;
+        }
     };
 }
 
@@ -694,41 +694,41 @@ EmitterFunc CParticle::createSphereEmitter (const ParticleEmitter& emitter) {
 
 void CParticle::setupInitializers () {
     for (const auto& initializer : m_particle.initializers) {
-	if (!initializer) {
-	    continue;
-	}
+        if (!initializer) {
+            continue;
+        }
 
-	InitializerFunc func;
+        InitializerFunc func;
 
-	if (initializer->is<ColorRandomInitializer> ()) {
-	    func = createColorRandomInitializer (*initializer->as<ColorRandomInitializer> ());
-	} else if (initializer->is<SizeRandomInitializer> ()) {
-	    func = createSizeRandomInitializer (*initializer->as<SizeRandomInitializer> ());
-	} else if (initializer->is<AlphaRandomInitializer> ()) {
-	    func = createAlphaRandomInitializer (*initializer->as<AlphaRandomInitializer> ());
-	} else if (initializer->is<LifetimeRandomInitializer> ()) {
-	    const auto& lifeInit = *initializer->as<LifetimeRandomInitializer> ();
-	    m_uniformLifetimes = (lifeInit.min->value->getFloat () == lifeInit.max->value->getFloat ());
-	    func = createLifetimeRandomInitializer (lifeInit);
-	} else if (initializer->is<VelocityRandomInitializer> ()) {
-	    func = createVelocityRandomInitializer (*initializer->as<VelocityRandomInitializer> ());
-	} else if (initializer->is<RotationRandomInitializer> ()) {
-	    func = createRotationRandomInitializer (*initializer->as<RotationRandomInitializer> ());
-	} else if (initializer->is<AngularVelocityRandomInitializer> ()) {
-	    func = createAngularVelocityRandomInitializer (*initializer->as<AngularVelocityRandomInitializer> ());
-	} else if (initializer->is<TurbulentVelocityRandomInitializer> ()) {
-	    func = createTurbulentVelocityRandomInitializer (*initializer->as<TurbulentVelocityRandomInitializer> ());
-	} else if (initializer->is<MapSequenceAroundControlPointInitializer> ()) {
-	    func = createMapSequenceAroundControlPointInitializer (
-		*initializer->as<MapSequenceAroundControlPointInitializer> ()
-	    );
-	} else {
-	    sLog.out ("Unknown initializer type");
-	}
+        if (initializer->is<ColorRandomInitializer> ()) {
+            func = createColorRandomInitializer (*initializer->as<ColorRandomInitializer> ());
+        } else if (initializer->is<SizeRandomInitializer> ()) {
+            func = createSizeRandomInitializer (*initializer->as<SizeRandomInitializer> ());
+        } else if (initializer->is<AlphaRandomInitializer> ()) {
+            func = createAlphaRandomInitializer (*initializer->as<AlphaRandomInitializer> ());
+        } else if (initializer->is<LifetimeRandomInitializer> ()) {
+            const auto& lifeInit = *initializer->as<LifetimeRandomInitializer> ();
+            m_uniformLifetimes = (lifeInit.min->value->getFloat () == lifeInit.max->value->getFloat ());
+            func = createLifetimeRandomInitializer (lifeInit);
+        } else if (initializer->is<VelocityRandomInitializer> ()) {
+            func = createVelocityRandomInitializer (*initializer->as<VelocityRandomInitializer> ());
+        } else if (initializer->is<RotationRandomInitializer> ()) {
+            func = createRotationRandomInitializer (*initializer->as<RotationRandomInitializer> ());
+        } else if (initializer->is<AngularVelocityRandomInitializer> ()) {
+            func = createAngularVelocityRandomInitializer (*initializer->as<AngularVelocityRandomInitializer> ());
+        } else if (initializer->is<TurbulentVelocityRandomInitializer> ()) {
+            func = createTurbulentVelocityRandomInitializer (*initializer->as<TurbulentVelocityRandomInitializer> ());
+        } else if (initializer->is<MapSequenceAroundControlPointInitializer> ()) {
+            func = createMapSequenceAroundControlPointInitializer (
+                *initializer->as<MapSequenceAroundControlPointInitializer> ()
+            );
+        } else {
+            sLog.out ("Unknown initializer type");
+        }
 
-	if (func) {
-	    m_initializers.push_back (std::move (func));
-	}
+        if (func) {
+            m_initializers.push_back (std::move (func));
+        }
     }
 }
 
@@ -738,8 +738,8 @@ InitializerFunc CParticle::createColorRandomInitializer (const ColorRandomInitia
     DynamicValue* colorOverride = m_particle.instanceOverride.colorn->value.get ();
 
     return [this, minValue, maxValue, colorOverride] (ParticleInstance& p) {
-	p.color = randomVec3 (m_rng, minValue->getVec3 (), maxValue->getVec3 ()) * colorOverride->getVec3 ();
-	p.initial.color = p.color;
+        p.color = randomVec3 (m_rng, minValue->getVec3 (), maxValue->getVec3 ()) * colorOverride->getVec3 ();
+        p.initial.color = p.color;
     };
 }
 
@@ -750,15 +750,15 @@ InitializerFunc CParticle::createSizeRandomInitializer (const SizeRandomInitiali
     DynamicValue* sizeOverride = m_particle.instanceOverride.size->value.get ();
 
     return [this, minValue, maxValue, exponentValue, sizeOverride] (ParticleInstance& p) {
-	float t = randomFloat (m_rng, 0.0f, 1.0f);
-	float exponent = exponentValue->getFloat ();
-	float min = minValue->getFloat ();
-	float max = maxValue->getFloat ();
+        float t = randomFloat (m_rng, 0.0f, 1.0f);
+        float exponent = exponentValue->getFloat ();
+        float min = minValue->getFloat ();
+        float max = maxValue->getFloat ();
 
-	// Apply exponent for non-linear distribution
-	float adjustedT = std::pow (t, exponent);
-	p.size = (min + adjustedT * (max - min)) * sizeOverride->getFloat () / 2.0f;
-	p.initial.size = p.size;
+        // Apply exponent for non-linear distribution
+        float adjustedT = std::pow (t, exponent);
+        p.size = (min + adjustedT * (max - min)) * sizeOverride->getFloat () / 2.0f;
+        p.initial.size = p.size;
     };
 }
 
@@ -768,8 +768,8 @@ InitializerFunc CParticle::createAlphaRandomInitializer (const AlphaRandomInitia
     DynamicValue* alphaOverride = m_particle.instanceOverride.alpha->value.get ();
 
     return [this, minValue, maxValue, alphaOverride] (ParticleInstance& p) {
-	p.alpha = randomFloat (m_rng, minValue->getFloat (), maxValue->getFloat ()) * alphaOverride->getFloat ();
-	p.initial.alpha = p.alpha;
+        p.alpha = randomFloat (m_rng, minValue->getFloat (), maxValue->getFloat ()) * alphaOverride->getFloat ();
+        p.initial.alpha = p.alpha;
     };
 }
 
@@ -779,8 +779,8 @@ InitializerFunc CParticle::createLifetimeRandomInitializer (const LifetimeRandom
     DynamicValue* lifetimeOverride = m_particle.instanceOverride.lifetime->value.get ();
 
     return [this, minValue, maxValue, lifetimeOverride] (ParticleInstance& p) {
-	p.lifetime = randomFloat (m_rng, minValue->getFloat (), maxValue->getFloat ()) * lifetimeOverride->getFloat ();
-	p.initial.lifetime = p.lifetime;
+        p.lifetime = randomFloat (m_rng, minValue->getFloat (), maxValue->getFloat ()) * lifetimeOverride->getFloat ();
+        p.initial.lifetime = p.lifetime;
     };
 }
 
@@ -790,9 +790,9 @@ InitializerFunc CParticle::createVelocityRandomInitializer (const VelocityRandom
     DynamicValue* speedOverride = m_particle.instanceOverride.speed->value.get ();
 
     return [this, minValue, maxValue, speedOverride] (ParticleInstance& p) {
-	glm::vec3 vel = randomVec3 (m_rng, minValue->getVec3 (), maxValue->getVec3 ()) * speedOverride->getFloat ();
-	vel.y = -vel.y;
-	p.velocity += vel;
+        glm::vec3 vel = randomVec3 (m_rng, minValue->getVec3 (), maxValue->getVec3 ()) * speedOverride->getFloat ();
+        vel.y = -vel.y;
+        p.velocity += vel;
     };
 }
 
@@ -802,7 +802,7 @@ InitializerFunc CParticle::createRotationRandomInitializer (const RotationRandom
     DynamicValue* speedOverride = m_particle.instanceOverride.speed->value.get ();
 
     return [this, minValue, maxValue, speedOverride] (ParticleInstance& p) {
-	p.rotation = randomVec3 (m_rng, minValue->getVec3 (), maxValue->getVec3 ()) * speedOverride->getFloat ();
+        p.rotation = randomVec3 (m_rng, minValue->getVec3 (), maxValue->getVec3 ()) * speedOverride->getFloat ();
     };
 }
 
@@ -813,22 +813,22 @@ InitializerFunc CParticle::createAngularVelocityRandomInitializer (const Angular
     DynamicValue* speedOverride = m_particle.instanceOverride.speed->value.get ();
 
     return [this, minValue, maxValue, exponentValue, speedOverride] (ParticleInstance& p) {
-	glm::vec3 minVec = minValue->getVec3 ();
-	glm::vec3 maxVec = maxValue->getVec3 ();
-	float exponent = exponentValue->getFloat ();
+        glm::vec3 minVec = minValue->getVec3 ();
+        glm::vec3 maxVec = maxValue->getVec3 ();
+        float exponent = exponentValue->getFloat ();
 
-	// Apply exponent bias to random distribution
-	// exponent = 1: uniform distribution
-	// exponent -> 0: bias towards max
-	// exponent >= 2: bias towards min
-	glm::vec3 result;
-	for (int i = 0; i < 3; i++) {
-	    float t = randomFloat (m_rng, 0.0f, 1.0f);
-	    t = std::pow (t, exponent);
-	    result[i] = minVec[i] + t * (maxVec[i] - minVec[i]);
-	}
+        // Apply exponent bias to random distribution
+        // exponent = 1: uniform distribution
+        // exponent -> 0: bias towards max
+        // exponent >= 2: bias towards min
+        glm::vec3 result;
+        for (int i = 0; i < 3; i++) {
+            float t = randomFloat (m_rng, 0.0f, 1.0f);
+            t = std::pow (t, exponent);
+            result[i] = minVec[i] + t * (maxVec[i] - minVec[i]);
+        }
 
-	p.angularVelocity = result * speedOverride->getFloat ();
+        p.angularVelocity = result * speedOverride->getFloat ();
     };
 }
 
@@ -845,92 +845,92 @@ InitializerFunc CParticle::createTurbulentVelocityRandomInitializer (const Turbu
     DynamicValue* speedOverride = m_particle.instanceOverride.speed->value.get ();
 
     return [this, speedMin, speedMax, offsetVal, scaleVal, forwardVal, timeScaleVal, phaseMinVal, phaseMaxVal, rightVal,
-	    speedOverride] (ParticleInstance& p) {
-	// Get direction parameters
-	glm::vec3 forward = forwardVal->getVec3 ();
-	glm::vec3 right = rightVal->getVec3 ();
-	// Y-flip for coordinate system conversion
-	forward.y = -forward.y;
-	right.y = -right.y;
+            speedOverride] (ParticleInstance& p) {
+        // Get direction parameters
+        glm::vec3 forward = forwardVal->getVec3 ();
+        glm::vec3 right = rightVal->getVec3 ();
+        // Y-flip for coordinate system conversion
+        forward.y = -forward.y;
+        right.y = -right.y;
 
-	if (glm::length (forward) > 0.0001f) {
-	    forward = glm::normalize (forward);
-	} else {
-	    // Default forward direction when not specified (up in centered space)
-	    forward = glm::vec3 (0.0f, 1.0f, 0.0f);
-	}
-	if (glm::length (right) > 0.0001f) {
-	    right = glm::normalize (right);
-	} else {
-	    right = glm::vec3 (1.0f, 0.0f, 0.0f);
-	}
+        if (glm::length (forward) > 0.0001f) {
+            forward = glm::normalize (forward);
+        } else {
+            // Default forward direction when not specified (up in centered space)
+            forward = glm::vec3 (0.0f, 1.0f, 0.0f);
+        }
+        if (glm::length (right) > 0.0001f) {
+            right = glm::normalize (right);
+        } else {
+            right = glm::vec3 (1.0f, 0.0f, 0.0f);
+        }
 
-	float speed = randomFloat (m_rng, speedMin->getFloat (), speedMax->getFloat ());
-	float scale = scaleVal->getFloat ();
-	float offset = offsetVal->getFloat ();
-	float timeScale = timeScaleVal->getFloat ();
-	float phaseMin = phaseMinVal->getFloat ();
-	float phaseMax = phaseMaxVal->getFloat ();
+        float speed = randomFloat (m_rng, speedMin->getFloat (), speedMax->getFloat ());
+        float scale = scaleVal->getFloat ();
+        float offset = offsetVal->getFloat ();
+        float timeScale = timeScaleVal->getFloat ();
+        float phaseMin = phaseMinVal->getFloat ();
+        float phaseMax = phaseMaxVal->getFloat ();
 
-	// Sample noise at particle position + time-based offset.
-	// timescale shifts the noise field over time so particles spawned at different
-	// times get gradually changing directions (creates smooth evolving vapor stream).
-	// Position component provides spatial coherence for nearby particles.
-	glm::vec3 noisePos = p.position * 0.1f;
-	noisePos += glm::vec3 (static_cast<float> (m_time) * timeScale);
+        // Sample noise at particle position + time-based offset.
+        // timescale shifts the noise field over time so particles spawned at different
+        // times get gradually changing directions (creates smooth evolving vapor stream).
+        // Position component provides spatial coherence for nearby particles.
+        glm::vec3 noisePos = p.position * 0.1f;
+        noisePos += glm::vec3 (static_cast<float> (m_time) * timeScale);
 
-	// Phase adds per-particle randomization to noise position
-	float phase = randomFloat (m_rng, phaseMin, phaseMax);
-	glm::vec3 samplePos = noisePos + glm::vec3 (phase, phase * 0.7f, phase * 1.3f);
+        // Phase adds per-particle randomization to noise position
+        float phase = randomFloat (m_rng, phaseMin, phaseMax);
+        glm::vec3 samplePos = noisePos + glm::vec3 (phase, phase * 0.7f, phase * 1.3f);
 
-	// Sample curl noise for direction and normalize
-	glm::vec3 result = curlNoise (samplePos);
-	float len = glm::length (result);
-	if (len < 0.0001f) {
-	    result = forward;
-	} else {
-	    result = result / len;
-	}
+        // Sample curl noise for direction and normalize
+        glm::vec3 result = curlNoise (samplePos);
+        float len = glm::length (result);
+        if (len < 0.0001f) {
+            result = forward;
+        } else {
+            result = result / len;
+        }
 
-	// Scale limits how far direction can deviate from forward
-	if (scale < 2.0f) {
-	    float cosAngle = glm::dot (result, forward);
-	    float angle = std::acos (glm::clamp (cosAngle, -1.0f, 1.0f)) / glm::pi<float> ();
-	    float maxAngle = scale / 2.0f;
+        // Scale limits how far direction can deviate from forward
+        if (scale < 2.0f) {
+            float cosAngle = glm::dot (result, forward);
+            float angle = std::acos (glm::clamp (cosAngle, -1.0f, 1.0f)) / glm::pi<float> ();
+            float maxAngle = scale / 2.0f;
 
-	    if (angle > maxAngle && maxAngle > 0.0001f) {
-		glm::vec3 axis = glm::cross (result, forward);
-		float axisLen = glm::length (axis);
-		if (axisLen > 0.0001f) {
-		    axis = axis / axisLen;
-		    float rotAngle = (angle - maxAngle) * glm::pi<float> ();
-		    glm::mat3 rot = glm::mat3 (glm::rotate (glm::mat4 (1.0f), rotAngle, axis));
-		    result = rot * result;
-		}
-	    }
-	}
+            if (angle > maxAngle && maxAngle > 0.0001f) {
+                glm::vec3 axis = glm::cross (result, forward);
+                float axisLen = glm::length (axis);
+                if (axisLen > 0.0001f) {
+                    axis = axis / axisLen;
+                    float rotAngle = (angle - maxAngle) * glm::pi<float> ();
+                    glm::mat3 rot = glm::mat3 (glm::rotate (glm::mat4 (1.0f), rotAngle, axis));
+                    result = rot * result;
+                }
+            }
+        }
 
-	// Offset rotates result around right axis (tilts up/down)
-	if (std::abs (offset) > 0.0001f) {
-	    glm::mat3 rot = glm::mat3 (glm::rotate (glm::mat4 (1.0f), -offset, right));
-	    result = rot * result;
-	}
+        // Offset rotates result around right axis (tilts up/down)
+        if (std::abs (offset) > 0.0001f) {
+            glm::mat3 rot = glm::mat3 (glm::rotate (glm::mat4 (1.0f), -offset, right));
+            result = rot * result;
+        }
 
-	// For 2D/orthographic particles (flags & 4 == 0), project direction onto XY plane.
-	// curlNoise is 3D but z-drift is meaningless for 2D particles and causes
-	// rope segments to diverge in depth, breaking visual connectivity.
-	if ((m_particle.flags & 4) == 0) {
-	    result.z = 0.0f;
-	    float len2d = glm::length (result);
-	    if (len2d > 0.0001f) {
-		result /= len2d;
-	    }
-	}
+        // For 2D/orthographic particles (flags & 4 == 0), project direction onto XY plane.
+        // curlNoise is 3D but z-drift is meaningless for 2D particles and causes
+        // rope segments to diverge in depth, breaking visual connectivity.
+        if ((m_particle.flags & 4) == 0) {
+            result.z = 0.0f;
+            float len2d = glm::length (result);
+            if (len2d > 0.0001f) {
+                result /= len2d;
+            }
+        }
 
-	// Apply speed and instance override
-	glm::vec3 finalVel = result * speed * speedOverride->getFloat ();
+        // Apply speed and instance override
+        glm::vec3 finalVel = result * speed * speedOverride->getFloat ();
 
-	p.velocity += finalVel;
+        p.velocity += finalVel;
     };
 }
 
@@ -947,40 +947,40 @@ CParticle::createMapSequenceAroundControlPointInitializer (const MapSequenceArou
     int sequenceIndex = 0;
 
     return [this, controlPointValue, countValue, speedMinValue, speedMaxValue, sequenceIndex,
-	    speedOverride] (ParticleInstance& p) mutable {
-	int controlPoint = static_cast<int> (controlPointValue->getFloat ());
-	int count = static_cast<int> (countValue->getFloat ());
+            speedOverride] (ParticleInstance& p) mutable {
+        int controlPoint = static_cast<int> (controlPointValue->getFloat ());
+        int count = static_cast<int> (countValue->getFloat ());
 
-	// Calculate angle for this particle in the sequence (evenly distributed around circle)
-	float angle = (static_cast<float> (sequenceIndex) / static_cast<float> (count)) * glm::two_pi<float> ();
-	sequenceIndex = (sequenceIndex + 1) % count; // Wrap around after reaching count
+        // Calculate angle for this particle in the sequence (evenly distributed around circle)
+        float angle = (static_cast<float> (sequenceIndex) / static_cast<float> (count)) * glm::two_pi<float> ();
+        sequenceIndex = (sequenceIndex + 1) % count; // Wrap around after reaching count
 
-	// Get control point position to spawn around
-	glm::vec3 centerPos = glm::vec3 (0.0f);
-	if (controlPoint >= 0 && controlPoint < static_cast<int> (m_controlPoints.size ())) {
-	    centerPos = m_controlPoints[controlPoint].position;
-	}
+        // Get control point position to spawn around
+        glm::vec3 centerPos = glm::vec3 (0.0f);
+        if (controlPoint >= 0 && controlPoint < static_cast<int> (m_controlPoints.size ())) {
+            centerPos = m_controlPoints[controlPoint].position;
+        }
 
-	// Set particle position in circular pattern around control point
-	// This creates the natural clustering seen in the original
-	p.position = centerPos;
+        // Set particle position in circular pattern around control point
+        // This creates the natural clustering seen in the original
+        p.position = centerPos;
 
-	// Set velocity based on angle and speed range
-	glm::vec3 speedMin = speedMinValue->getVec3 ();
-	glm::vec3 speedMax = speedMaxValue->getVec3 ();
-	glm::vec3 speed = randomVec3 (m_rng, speedMin, speedMax);
+        // Set velocity based on angle and speed range
+        glm::vec3 speedMin = speedMinValue->getVec3 ();
+        glm::vec3 speedMax = speedMaxValue->getVec3 ();
+        glm::vec3 speed = randomVec3 (m_rng, speedMin, speedMax);
 
-	// Flip Y before rotation to convert to centered space
-	speed.y = -speed.y;
+        // Flip Y before rotation to convert to centered space
+        speed.y = -speed.y;
 
-	// Rotate velocity based on sequence angle (creates outward radial pattern)
-	glm::mat3 rotationMatrix = glm::mat3 (
-	    std::cos (angle), -std::sin (angle), 0.0f, std::sin (angle), std::cos (angle), 0.0f, 0.0f, 0.0f, 1.0f
-	);
-	glm::vec3 rotatedSpeed = rotationMatrix * speed * speedOverride->getFloat ();
+        // Rotate velocity based on sequence angle (creates outward radial pattern)
+        glm::mat3 rotationMatrix = glm::mat3 (
+            std::cos (angle), -std::sin (angle), 0.0f, std::sin (angle), std::cos (angle), 0.0f, 0.0f, 0.0f, 1.0f
+        );
+        glm::vec3 rotatedSpeed = rotationMatrix * speed * speedOverride->getFloat ();
 
-	// Set velocity (speed override applied in movement operator)
-	p.velocity = rotatedSpeed;
+        // Set velocity (speed override applied in movement operator)
+        p.velocity = rotatedSpeed;
     };
 }
 
@@ -988,43 +988,43 @@ CParticle::createMapSequenceAroundControlPointInitializer (const MapSequenceArou
 
 void CParticle::setupOperators () {
     for (const auto& op : m_particle.operators) {
-	if (!op) {
-	    continue;
-	}
+        if (!op) {
+            continue;
+        }
 
-	OperatorFunc func;
+        OperatorFunc func;
 
-	if (op->is<MovementOperator> ()) {
-	    func = createMovementOperator (*op->as<MovementOperator> ());
-	} else if (op->is<AngularMovementOperator> ()) {
-	    func = createAngularMovementOperator (*op->as<AngularMovementOperator> ());
-	} else if (op->is<AlphaFadeOperator> ()) {
-	    func = createAlphaFadeOperator (*op->as<AlphaFadeOperator> ());
-	} else if (op->is<SizeChangeOperator> ()) {
-	    func = createSizeChangeOperator (*op->as<SizeChangeOperator> ());
-	} else if (op->is<AlphaChangeOperator> ()) {
-	    func = createAlphaChangeOperator (*op->as<AlphaChangeOperator> ());
-	} else if (op->is<ColorChangeOperator> ()) {
-	    func = createColorChangeOperator (*op->as<ColorChangeOperator> ());
-	} else if (op->is<TurbulenceOperator> ()) {
-	    func = createTurbulenceOperator (*op->as<TurbulenceOperator> ());
-	} else if (op->is<VortexOperator> ()) {
-	    func = createVortexOperator (*op->as<VortexOperator> ());
-	} else if (op->is<ControlPointAttractOperator> ()) {
-	    func = createControlPointAttractOperator (*op->as<ControlPointAttractOperator> ());
-	} else if (op->is<OscillateAlphaOperator> ()) {
-	    func = createOscillateAlphaOperator (*op->as<OscillateAlphaOperator> ());
-	} else if (op->is<OscillateSizeOperator> ()) {
-	    func = createOscillateSizeOperator (*op->as<OscillateSizeOperator> ());
-	} else if (op->is<OscillatePositionOperator> ()) {
-	    func = createOscillatePositionOperator (*op->as<OscillatePositionOperator> ());
-	} else {
-	    sLog.out ("Unknown operator type");
-	}
+        if (op->is<MovementOperator> ()) {
+            func = createMovementOperator (*op->as<MovementOperator> ());
+        } else if (op->is<AngularMovementOperator> ()) {
+            func = createAngularMovementOperator (*op->as<AngularMovementOperator> ());
+        } else if (op->is<AlphaFadeOperator> ()) {
+            func = createAlphaFadeOperator (*op->as<AlphaFadeOperator> ());
+        } else if (op->is<SizeChangeOperator> ()) {
+            func = createSizeChangeOperator (*op->as<SizeChangeOperator> ());
+        } else if (op->is<AlphaChangeOperator> ()) {
+            func = createAlphaChangeOperator (*op->as<AlphaChangeOperator> ());
+        } else if (op->is<ColorChangeOperator> ()) {
+            func = createColorChangeOperator (*op->as<ColorChangeOperator> ());
+        } else if (op->is<TurbulenceOperator> ()) {
+            func = createTurbulenceOperator (*op->as<TurbulenceOperator> ());
+        } else if (op->is<VortexOperator> ()) {
+            func = createVortexOperator (*op->as<VortexOperator> ());
+        } else if (op->is<ControlPointAttractOperator> ()) {
+            func = createControlPointAttractOperator (*op->as<ControlPointAttractOperator> ());
+        } else if (op->is<OscillateAlphaOperator> ()) {
+            func = createOscillateAlphaOperator (*op->as<OscillateAlphaOperator> ());
+        } else if (op->is<OscillateSizeOperator> ()) {
+            func = createOscillateSizeOperator (*op->as<OscillateSizeOperator> ());
+        } else if (op->is<OscillatePositionOperator> ()) {
+            func = createOscillatePositionOperator (*op->as<OscillatePositionOperator> ());
+        } else {
+            sLog.out ("Unknown operator type");
+        }
 
-	if (func) {
-	    m_operators.push_back (std::move (func));
-	}
+        if (func) {
+            m_operators.push_back (std::move (func));
+        }
     }
 }
 
@@ -1034,37 +1034,37 @@ OperatorFunc CParticle::createMovementOperator (const MovementOperator& op) {
     DynamicValue* speedOverride = m_particle.instanceOverride.speed->value.get ();
 
     return [dragValue, gravityValue, speedOverride] (
-	       std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float,
-	       float dt
-	   ) {
-	float speed = speedOverride->getFloat ();
-	float drag = dragValue->getFloat ();
-	glm::vec3 gravity = gravityValue->getVec3 ();
-	// Flip gravity Y for centered space
-	gravity.y = -gravity.y;
+               std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float,
+               float dt
+           ) {
+        float speed = speedOverride->getFloat ();
+        float drag = dragValue->getFloat ();
+        glm::vec3 gravity = gravityValue->getVec3 ();
+        // Flip gravity Y for centered space
+        gravity.y = -gravity.y;
 
-	for (uint32_t i = 0; i < count; i++) {
-	    auto& p = particles[i];
-	    if (!p.alive) {
-		continue;
-	    }
+        for (uint32_t i = 0; i < count; i++) {
+            auto& p = particles[i];
+            if (!p.alive) {
+                continue;
+            }
 
-	    // Update position FIRST using current velocity
-	    // Velocity is already scaled by speed override
-	    p.position += p.velocity * dt;
+            // Update position FIRST using current velocity
+            // Velocity is already scaled by speed override
+            p.position += p.velocity * dt;
 
-	    // Then apply forces to modify velocity for NEXT frame
-	    // Apply gravity
-	    p.velocity += gravity * dt * speed;
+            // Then apply forces to modify velocity for NEXT frame
+            // Apply gravity
+            p.velocity += gravity * dt * speed;
 
-	    // Apply drag (velocity decay)
-	    // Clamp to prevent velocity reversal if drag*dt > 1.0
-	    float dragFactor = 1.0f - (drag * dt);
-	    if (dragFactor < 0.0f) {
-		dragFactor = 0.0f;
-	    }
-	    p.velocity *= dragFactor;
-	}
+            // Apply drag (velocity decay)
+            // Clamp to prevent velocity reversal if drag*dt > 1.0
+            float dragFactor = 1.0f - (drag * dt);
+            if (dragFactor < 0.0f) {
+                dragFactor = 0.0f;
+            }
+            p.velocity *= dragFactor;
+        }
     };
 }
 
@@ -1074,46 +1074,46 @@ OperatorFunc CParticle::createAngularMovementOperator (const AngularMovementOper
     DynamicValue* speedOverride = m_particle.instanceOverride.speed->value.get ();
 
     return [dragValue, forceValue, speedOverride] (
-	       std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float,
-	       float dt
-	   ) {
-	float drag = dragValue->getFloat ();
-	float speed = speedOverride->getFloat ();
-	glm::vec3 force = forceValue->getVec3 ();
+               std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float,
+               float dt
+           ) {
+        float drag = dragValue->getFloat ();
+        float speed = speedOverride->getFloat ();
+        glm::vec3 force = forceValue->getVec3 ();
 
-	for (uint32_t i = 0; i < count; i++) {
-	    auto& p = particles[i];
-	    if (!p.alive) {
-		continue;
-	    }
+        for (uint32_t i = 0; i < count; i++) {
+            auto& p = particles[i];
+            if (!p.alive) {
+                continue;
+            }
 
-	    // Update rotation using current angular velocity
-	    p.rotation += p.angularVelocity * dt * speed;
+            // Update rotation using current angular velocity
+            p.rotation += p.angularVelocity * dt * speed;
 
-	    // Apply force (angular acceleration)
-	    p.angularVelocity += force * dt * speed;
+            // Apply force (angular acceleration)
+            p.angularVelocity += force * dt * speed;
 
-	    // Apply drag (angular velocity decay)
-	    // Positive drag slows down, negative drag speeds up
-	    // Clamp to prevent velocity reversal if drag*dt > 1.0
-	    float dragFactor = 1.0f - (drag * dt);
-	    if (dragFactor < 0.0f) {
-		dragFactor = 0.0f;
-	    }
-	    p.angularVelocity *= dragFactor;
+            // Apply drag (angular velocity decay)
+            // Positive drag slows down, negative drag speeds up
+            // Clamp to prevent velocity reversal if drag*dt > 1.0
+            float dragFactor = 1.0f - (drag * dt);
+            if (dragFactor < 0.0f) {
+                dragFactor = 0.0f;
+            }
+            p.angularVelocity *= dragFactor;
 
-	    // Wrap rotation to prevent floating-point precision issues
-	    const float pi = glm::pi<float> ();
-	    const float two_pi = glm::two_pi<float> ();
-	    for (int j = 0; j < 3; j++) {
-		while (p.rotation[j] > pi) {
-		    p.rotation[j] -= two_pi;
-		}
-		while (p.rotation[j] < -pi) {
-		    p.rotation[j] += two_pi;
-		}
-	    }
-	}
+            // Wrap rotation to prevent floating-point precision issues
+            const float pi = glm::pi<float> ();
+            const float two_pi = glm::two_pi<float> ();
+            for (int j = 0; j < 3; j++) {
+                while (p.rotation[j] > pi) {
+                    p.rotation[j] -= two_pi;
+                }
+                while (p.rotation[j] < -pi) {
+                    p.rotation[j] += two_pi;
+                }
+            }
+        }
     };
 }
 
@@ -1122,34 +1122,34 @@ OperatorFunc CParticle::createAlphaFadeOperator (const AlphaFadeOperator& op) {
     DynamicValue* fadeOutTimeValue = op.fadeOutTime->value.get ();
 
     return
-	[fadeInTimeValue, fadeOutTimeValue] (
-	    std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
-	) {
-	    float fadeInTime = fadeInTimeValue->getFloat ();
-	    float fadeOutTime = fadeOutTimeValue->getFloat ();
+        [fadeInTimeValue, fadeOutTimeValue] (
+            std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
+        ) {
+            float fadeInTime = fadeInTimeValue->getFloat ();
+            float fadeOutTime = fadeOutTimeValue->getFloat ();
 
-	    for (uint32_t i = 0; i < count; i++) {
-		auto& p = particles[i];
-		if (!p.alive) {
-		    continue;
-		}
+            for (uint32_t i = 0; i < count; i++) {
+                auto& p = particles[i];
+                if (!p.alive) {
+                    continue;
+                }
 
-		float life = p.getLifetimePos ();
+                float life = p.getLifetimePos ();
 
-		if (life <= fadeInTime) {
-		    float fade = fadeValue (life, 0.0f, fadeInTime, 0.0f, 1.0f);
-		    p.alpha = p.initial.alpha * fade;
-		} else if (life > fadeOutTime) {
-		    float fade = 1.0f - fadeValue (life, fadeOutTime, 1.0f, 0.0f, 1.0f);
-		    p.alpha = p.initial.alpha * fade;
-		} else {
-		    p.alpha = p.initial.alpha;
-		}
+                if (life <= fadeInTime) {
+                    float fade = fadeValue (life, 0.0f, fadeInTime, 0.0f, 1.0f);
+                    p.alpha = p.initial.alpha * fade;
+                } else if (life > fadeOutTime) {
+                    float fade = 1.0f - fadeValue (life, fadeOutTime, 1.0f, 0.0f, 1.0f);
+                    p.alpha = p.initial.alpha * fade;
+                } else {
+                    p.alpha = p.initial.alpha;
+                }
 
-		// Update oscillator base so oscillateAlpha combines properly
-		p.oscillateAlpha.base = p.alpha;
-	    }
-	};
+                // Update oscillator base so oscillateAlpha combines properly
+                p.oscillateAlpha.base = p.alpha;
+            }
+        };
 }
 
 OperatorFunc CParticle::createSizeChangeOperator (const SizeChangeOperator& op) {
@@ -1159,28 +1159,28 @@ OperatorFunc CParticle::createSizeChangeOperator (const SizeChangeOperator& op) 
     DynamicValue* endValueValue = op.endValue->value.get ();
 
     return
-	[startTimeValue, endTimeValue, startValueValue, endValueValue] (
-	    std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
-	) {
-	    float startTime = startTimeValue->getFloat ();
-	    float endTime = endTimeValue->getFloat ();
-	    float startValue = startValueValue->getFloat ();
-	    float endValue = endValueValue->getFloat ();
+        [startTimeValue, endTimeValue, startValueValue, endValueValue] (
+            std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
+        ) {
+            float startTime = startTimeValue->getFloat ();
+            float endTime = endTimeValue->getFloat ();
+            float startValue = startValueValue->getFloat ();
+            float endValue = endValueValue->getFloat ();
 
-	    for (uint32_t i = 0; i < count; i++) {
-		auto& p = particles[i];
-		if (!p.alive) {
-		    continue;
-		}
+            for (uint32_t i = 0; i < count; i++) {
+                auto& p = particles[i];
+                if (!p.alive) {
+                    continue;
+                }
 
-		float life = p.getLifetimePos ();
-		float multiplier = fadeValue (life, startTime, endTime, startValue, endValue);
-		p.size = p.initial.size * multiplier;
+                float life = p.getLifetimePos ();
+                float multiplier = fadeValue (life, startTime, endTime, startValue, endValue);
+                p.size = p.initial.size * multiplier;
 
-		// Update oscillator base so oscillateSize combines properly
-		p.oscillateSize.base = p.size;
-	    }
-	};
+                // Update oscillator base so oscillateSize combines properly
+                p.oscillateSize.base = p.size;
+            }
+        };
 }
 
 OperatorFunc CParticle::createAlphaChangeOperator (const AlphaChangeOperator& op) {
@@ -1190,28 +1190,28 @@ OperatorFunc CParticle::createAlphaChangeOperator (const AlphaChangeOperator& op
     DynamicValue* endValueValue = op.endValue->value.get ();
 
     return
-	[startTimeValue, endTimeValue, startValueValue, endValueValue] (
-	    std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
-	) {
-	    float startTime = startTimeValue->getFloat ();
-	    float endTime = endTimeValue->getFloat ();
-	    float startValue = startValueValue->getFloat ();
-	    float endValue = endValueValue->getFloat ();
+        [startTimeValue, endTimeValue, startValueValue, endValueValue] (
+            std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
+        ) {
+            float startTime = startTimeValue->getFloat ();
+            float endTime = endTimeValue->getFloat ();
+            float startValue = startValueValue->getFloat ();
+            float endValue = endValueValue->getFloat ();
 
-	    for (uint32_t i = 0; i < count; i++) {
-		auto& p = particles[i];
-		if (!p.alive) {
-		    continue;
-		}
+            for (uint32_t i = 0; i < count; i++) {
+                auto& p = particles[i];
+                if (!p.alive) {
+                    continue;
+                }
 
-		float life = p.getLifetimePos ();
-		float multiplier = fadeValue (life, startTime, endTime, startValue, endValue);
-		p.alpha = p.initial.alpha * multiplier;
+                float life = p.getLifetimePos ();
+                float multiplier = fadeValue (life, startTime, endTime, startValue, endValue);
+                p.alpha = p.initial.alpha * multiplier;
 
-		// Update oscillator base so oscillateAlpha combines properly
-		p.oscillateAlpha.base = p.alpha;
-	    }
-	};
+                // Update oscillator base so oscillateAlpha combines properly
+                p.oscillateAlpha.base = p.alpha;
+            }
+        };
 }
 
 OperatorFunc CParticle::createColorChangeOperator (const ColorChangeOperator& op) {
@@ -1221,30 +1221,30 @@ OperatorFunc CParticle::createColorChangeOperator (const ColorChangeOperator& op
     DynamicValue* endValueValue = op.endValue->value.get ();
 
     return
-	[startTimeValue, endTimeValue, startValueValue, endValueValue] (
-	    std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
-	) {
-	    float startTime = startTimeValue->getFloat ();
-	    float endTime = endTimeValue->getFloat ();
-	    glm::vec3 startValue = startValueValue->getVec3 ();
-	    glm::vec3 endValue = endValueValue->getVec3 ();
+        [startTimeValue, endTimeValue, startValueValue, endValueValue] (
+            std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
+        ) {
+            float startTime = startTimeValue->getFloat ();
+            float endTime = endTimeValue->getFloat ();
+            glm::vec3 startValue = startValueValue->getVec3 ();
+            glm::vec3 endValue = endValueValue->getVec3 ();
 
-	    for (uint32_t i = 0; i < count; i++) {
-		auto& p = particles[i];
-		if (!p.alive) {
-		    continue;
-		}
+            for (uint32_t i = 0; i < count; i++) {
+                auto& p = particles[i];
+                if (!p.alive) {
+                    continue;
+                }
 
-		float life = p.getLifetimePos ();
+                float life = p.getLifetimePos ();
 
-		glm::vec3 color;
-		color.r = fadeValue (life, startTime, endTime, startValue.r, endValue.r);
-		color.g = fadeValue (life, startTime, endTime, startValue.g, endValue.g);
-		color.b = fadeValue (life, startTime, endTime, startValue.b, endValue.b);
+                glm::vec3 color;
+                color.r = fadeValue (life, startTime, endTime, startValue.r, endValue.r);
+                color.g = fadeValue (life, startTime, endTime, startValue.g, endValue.g);
+                color.b = fadeValue (life, startTime, endTime, startValue.b, endValue.b);
 
-		p.color = p.initial.color * color;
-	    }
-	};
+                p.color = p.initial.color * color;
+            }
+        };
 }
 
 OperatorFunc CParticle::createTurbulenceOperator (const TurbulenceOperator& op) {
@@ -1269,37 +1269,37 @@ OperatorFunc CParticle::createTurbulenceOperator (const TurbulenceOperator& op) 
     const float turbSpeed = randomFloat (m_rng, speedMinValue->getFloat (), speedMaxValue->getFloat ());
 
     return [scaleValue, timeScaleValue, maskValue, speedOverride, phase, turbSpeed] (
-	       std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&,
-	       float currentTime, float dt
-	   ) {
-	const float noiseScale = scaleValue->getFloat () * 2.0f;
-	const float timeScale = timeScaleValue->getFloat ();
-	const glm::vec3 mask = maskValue->getVec3 ();
-	const float speed = speedOverride->getFloat ();
+               std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&,
+               float currentTime, float dt
+           ) {
+        const float noiseScale = scaleValue->getFloat () * 2.0f;
+        const float timeScale = timeScaleValue->getFloat ();
+        const glm::vec3 mask = maskValue->getVec3 ();
+        const float speed = speedOverride->getFloat ();
 
-	if (turbSpeed <= 0.0001f) {
-	    return;
-	}
+        if (turbSpeed <= 0.0001f) {
+            return;
+        }
 
-	for (size_t i = 0; i < count; ++i) {
-	    ParticleInstance& p = particles[i];
-	    if (!p.alive) {
-		continue;
-	    }
+        for (size_t i = 0; i < count; ++i) {
+            ParticleInstance& p = particles[i];
+            if (!p.alive) {
+                continue;
+            }
 
-	    glm::vec3 noisePos = p.position;
-	    noisePos.x += phase + timeScale * currentTime;
-	    noisePos *= noiseScale;
+            glm::vec3 noisePos = p.position;
+            noisePos.x += phase + timeScale * currentTime;
+            noisePos *= noiseScale;
 
-	    glm::vec3 curlDir = curlNoise (noisePos);
-	    const float len = glm::length (curlDir);
-	    if (len > 0.0001f) {
-		curlDir = (curlDir / len) * turbSpeed;
-	    }
+            glm::vec3 curlDir = curlNoise (noisePos);
+            const float len = glm::length (curlDir);
+            if (len > 0.0001f) {
+                curlDir = (curlDir / len) * turbSpeed;
+            }
 
-	    curlDir *= mask;
-	    p.velocity += curlDir * dt * speed;
-	}
+            curlDir *= mask;
+            p.velocity += curlDir * dt * speed;
+        }
     };
 }
 
@@ -1329,136 +1329,136 @@ OperatorFunc CParticle::createVortexOperator (const VortexOperator& op) {
     bool ringShape = (flags & 4) != 0;
 
     return [this, controlPoint, axisValue, offsetValue, distanceInnerValue, distanceOuterValue, speedInnerValue,
-	    speedOuterValue, centerForceValue, ringRadiusValue, ringWidthValue, ringPullDistanceValue,
-	    ringPullForceValue, audioMode, infiniteAxis, maintainDistance, ringShape, speedOverride] (
-	       std::vector<ParticleInstance>& particles, uint32_t count,
-	       const std::vector<ControlPointData>& controlPoints, float, float dt
-	   ) {
-	// Audio modulation (when implemented, this will sample from audio context)
-	float audioAmplitude = 0.0f; // TODO: Sample from AudioContext when audio processing is implemented
+            speedOuterValue, centerForceValue, ringRadiusValue, ringWidthValue, ringPullDistanceValue,
+            ringPullForceValue, audioMode, infiniteAxis, maintainDistance, ringShape, speedOverride] (
+               std::vector<ParticleInstance>& particles, uint32_t count,
+               const std::vector<ControlPointData>& controlPoints, float, float dt
+           ) {
+        // Audio modulation (when implemented, this will sample from audio context)
+        float audioAmplitude = 0.0f; // TODO: Sample from AudioContext when audio processing is implemented
 
-	// If audio mode is enabled but no audio, skip vortex entirely
-	if (audioMode > 0 && audioAmplitude == 0.0f) {
-	    return;
-	}
+        // If audio mode is enabled but no audio, skip vortex entirely
+        if (audioMode > 0 && audioAmplitude == 0.0f) {
+            return;
+        }
 
-	glm::vec3 axis = axisValue->getVec3 ();
-	glm::vec3 offset = offsetValue->getVec3 ();
-	float distanceInner = distanceInnerValue->getFloat ();
-	float distanceOuter = distanceOuterValue->getFloat ();
-	float speedInner = speedInnerValue->getFloat ();
-	float speedOuter = speedOuterValue->getFloat ();
-	float centerForce = centerForceValue->getFloat ();
-	float ringRadius = ringRadiusValue->getFloat ();
-	float ringWidth = ringWidthValue->getFloat ();
-	float ringPullDistance = ringPullDistanceValue->getFloat ();
-	float ringPullForce = ringPullForceValue->getFloat ();
+        glm::vec3 axis = axisValue->getVec3 ();
+        glm::vec3 offset = offsetValue->getVec3 ();
+        float distanceInner = distanceInnerValue->getFloat ();
+        float distanceOuter = distanceOuterValue->getFloat ();
+        float speedInner = speedInnerValue->getFloat ();
+        float speedOuter = speedOuterValue->getFloat ();
+        float centerForce = centerForceValue->getFloat ();
+        float ringRadius = ringRadiusValue->getFloat ();
+        float ringWidth = ringWidthValue->getFloat ();
+        float ringPullDistance = ringPullDistanceValue->getFloat ();
+        float ringPullForce = ringPullForceValue->getFloat ();
 
-	// Apply audio modulation to speeds
-	if (audioMode > 0) {
-	    speedInner *= (1.0f + audioAmplitude);
-	    speedOuter *= (1.0f + audioAmplitude);
-	}
+        // Apply audio modulation to speeds
+        if (audioMode > 0) {
+            speedInner *= (1.0f + audioAmplitude);
+            speedOuter *= (1.0f + audioAmplitude);
+        }
 
-	// Get vortex center from control point
-	glm::vec3 center = glm::vec3 (0.0f);
-	if (controlPoint >= 0 && controlPoint < static_cast<int> (controlPoints.size ())) {
-	    center = controlPoints[controlPoint].position + offset;
-	} else {
-	    center = offset;
-	}
+        // Get vortex center from control point
+        glm::vec3 center = glm::vec3 (0.0f);
+        if (controlPoint >= 0 && controlPoint < static_cast<int> (controlPoints.size ())) {
+            center = controlPoints[controlPoint].position + offset;
+        } else {
+            center = offset;
+        }
 
-	// Normalize axis
-	if (glm::length (axis) > 0.0f) {
-	    axis = glm::normalize (axis);
-	} else {
-	    axis = glm::vec3 (0.0f, 0.0f, 1.0f); // Default to Z-axis
-	}
+        // Normalize axis
+        if (glm::length (axis) > 0.0f) {
+            axis = glm::normalize (axis);
+        } else {
+            axis = glm::vec3 (0.0f, 0.0f, 1.0f); // Default to Z-axis
+        }
 
-	for (uint32_t i = 0; i < count; i++) {
-	    auto& p = particles[i];
-	    if (!p.alive) {
-		continue;
-	    }
+        for (uint32_t i = 0; i < count; i++) {
+            auto& p = particles[i];
+            if (!p.alive) {
+                continue;
+            }
 
-	    // Calculate vector from center to particle
-	    glm::vec3 toParticle = p.position - center;
+            // Calculate vector from center to particle
+            glm::vec3 toParticle = p.position - center;
 
-	    // For infinite axis mode, project onto plane perpendicular to axis (cylinder shape)
-	    // Otherwise use full 3D distance (sphere shape)
-	    float axialDistance = 0.0f;
-	    glm::vec3 radialVector = toParticle;
-	    if (infiniteAxis) {
-		// Project out the axis component
-		axialDistance = glm::dot (toParticle, axis);
-		radialVector = toParticle - axis * axialDistance;
-	    }
+            // For infinite axis mode, project onto plane perpendicular to axis (cylinder shape)
+            // Otherwise use full 3D distance (sphere shape)
+            float axialDistance = 0.0f;
+            glm::vec3 radialVector = toParticle;
+            if (infiniteAxis) {
+                // Project out the axis component
+                axialDistance = glm::dot (toParticle, axis);
+                radialVector = toParticle - axis * axialDistance;
+            }
 
-	    float distance = glm::length (radialVector);
+            float distance = glm::length (radialVector);
 
-	    // Compute tangent direction (perpendicular to both axis and radial vector)
-	    glm::vec3 tangent = glm::cross (axis, radialVector);
-	    if (glm::length (tangent) > 0.001f) {
-		tangent = glm::normalize (tangent);
-	    } else {
-		continue; // Particle is on the axis
-	    }
+            // Compute tangent direction (perpendicular to both axis and radial vector)
+            glm::vec3 tangent = glm::cross (axis, radialVector);
+            if (glm::length (tangent) > 0.001f) {
+                tangent = glm::normalize (tangent);
+            } else {
+                continue; // Particle is on the axis
+            }
 
-	    // Calculate spin speed and apply forces based on mode
-	    float speed = 0.0f;
-	    glm::vec3 radialForce = glm::vec3 (0.0f);
+            // Calculate spin speed and apply forces based on mode
+            float speed = 0.0f;
+            glm::vec3 radialForce = glm::vec3 (0.0f);
 
-	    if (ringShape) {
-		// Ring mode: hollow center with ring-shaped influence zone
-		float ringInner = ringRadius - ringWidth * 0.5f;
-		float ringOuter = ringRadius + ringWidth * 0.5f;
+            if (ringShape) {
+                // Ring mode: hollow center with ring-shaped influence zone
+                float ringInner = ringRadius - ringWidth * 0.5f;
+                float ringOuter = ringRadius + ringWidth * 0.5f;
 
-		if (distance < ringInner) {
-		    // Inside the ring's hollow center - no spin, but may be pulled outward
-		    speed = 0.0f;
-		} else if (distance <= ringOuter) {
-		    // Inside the ring - full effect
-		    float t = (distance - ringInner) / ringWidth;
-		    speed = glm::mix (speedInner, speedOuter, t);
-		} else if (distance <= ringOuter + ringPullDistance) {
-		    // Outside ring but within pull distance - attract toward ring
-		    float pullT = (distance - ringOuter) / ringPullDistance;
-		    speed = speedOuter * (1.0f - pullT);
-		    // Pull toward ring
-		    if (distance > 0.001f) {
-			glm::vec3 towardRing = -glm::normalize (radialVector);
-			radialForce = towardRing * ringPullForce * pullT;
-		    }
-		} else {
-		    // Too far from ring - no effect
-		    speed = 0.0f;
-		}
-	    } else {
-		// Standard vortex mode
-		float disMid = distanceOuter - distanceInner + 0.1f;
+                if (distance < ringInner) {
+                    // Inside the ring's hollow center - no spin, but may be pulled outward
+                    speed = 0.0f;
+                } else if (distance <= ringOuter) {
+                    // Inside the ring - full effect
+                    float t = (distance - ringInner) / ringWidth;
+                    speed = glm::mix (speedInner, speedOuter, t);
+                } else if (distance <= ringOuter + ringPullDistance) {
+                    // Outside ring but within pull distance - attract toward ring
+                    float pullT = (distance - ringOuter) / ringPullDistance;
+                    speed = speedOuter * (1.0f - pullT);
+                    // Pull toward ring
+                    if (distance > 0.001f) {
+                        glm::vec3 towardRing = -glm::normalize (radialVector);
+                        radialForce = towardRing * ringPullForce * pullT;
+                    }
+                } else {
+                    // Too far from ring - no effect
+                    speed = 0.0f;
+                }
+            } else {
+                // Standard vortex mode
+                float disMid = distanceOuter - distanceInner + 0.1f;
 
-		if (disMid < 0 || distance < distanceInner) {
-		    speed = speedInner;
-		} else if (distance > distanceOuter) {
-		    speed = speedOuter;
-		} else {
-		    float t = (distance - distanceInner) / disMid;
-		    speed = glm::mix (speedInner, speedOuter, t);
-		}
-	    }
+                if (disMid < 0 || distance < distanceInner) {
+                    speed = speedInner;
+                } else if (distance > distanceOuter) {
+                    speed = speedOuter;
+                } else {
+                    float t = (distance - distanceInner) / disMid;
+                    speed = glm::mix (speedInner, speedOuter, t);
+                }
+            }
 
-	    // Apply tangential velocity (spinning)
-	    p.velocity += tangent * speed * dt * speedOverride->getFloat ();
+            // Apply tangential velocity (spinning)
+            p.velocity += tangent * speed * dt * speedOverride->getFloat ();
 
-	    // Apply radial force (ring pull)
-	    p.velocity += radialForce * dt * speedOverride->getFloat ();
+            // Apply radial force (ring pull)
+            p.velocity += radialForce * dt * speedOverride->getFloat ();
 
-	    // Apply center force when maintain distance is enabled
-	    if (maintainDistance && distance > 0.001f) {
-		glm::vec3 towardCenter = -glm::normalize (radialVector);
-		p.velocity += towardCenter * centerForce * dt * speedOverride->getFloat ();
-	    }
-	}
+            // Apply center force when maintain distance is enabled
+            if (maintainDistance && distance > 0.001f) {
+                glm::vec3 towardCenter = -glm::normalize (radialVector);
+                p.velocity += towardCenter * centerForce * dt * speedOverride->getFloat ();
+            }
+        }
     };
 }
 
@@ -1470,42 +1470,42 @@ OperatorFunc CParticle::createControlPointAttractOperator (const ControlPointAtt
     DynamicValue* speedOverride = m_particle.instanceOverride.speed->value.get ();
 
     return [this, controlPoint, originValue, scaleValue, thresholdValue, speedOverride] (
-	       std::vector<ParticleInstance>& particles, uint32_t count,
-	       const std::vector<ControlPointData>& controlPoints, float currentTime, float dt
-	   ) {
-	// Get dynamic values
-	glm::vec3 origin = originValue->getVec3 ();
-	float scale = scaleValue->getFloat ();
-	float threshold = thresholdValue->getFloat () / 2.0f;
+               std::vector<ParticleInstance>& particles, uint32_t count,
+               const std::vector<ControlPointData>& controlPoints, float currentTime, float dt
+           ) {
+        // Get dynamic values
+        glm::vec3 origin = originValue->getVec3 ();
+        float scale = scaleValue->getFloat ();
+        float threshold = thresholdValue->getFloat () / 2.0f;
 
-	// Get control point position
-	if (controlPoint < 0 || controlPoint >= static_cast<int> (controlPoints.size ())) {
-	    return;
-	}
+        // Get control point position
+        if (controlPoint < 0 || controlPoint >= static_cast<int> (controlPoints.size ())) {
+            return;
+        }
 
-	glm::vec3 center = controlPoints[controlPoint].position + origin;
+        glm::vec3 center = controlPoints[controlPoint].position + origin;
 
-	// Apply attraction force to all particles within threshold
-	for (uint32_t i = 0; i < count; i++) {
-	    auto& p = particles[i];
-	    if (!p.alive) {
-		continue;
-	    }
+        // Apply attraction force to all particles within threshold
+        for (uint32_t i = 0; i < count; i++) {
+            auto& p = particles[i];
+            if (!p.alive) {
+                continue;
+            }
 
-	    // Calculate distance and direction to control point
-	    glm::vec3 toCenter = center - p.position;
-	    float distance = glm::length (toCenter);
+            // Calculate distance and direction to control point
+            glm::vec3 toCenter = center - p.position;
+            float distance = glm::length (toCenter);
 
-	    // Only apply force if within threshold
-	    if (distance > 0.001f && distance < threshold) {
-		// Normalize direction
-		glm::vec3 direction = toCenter / distance;
+            // Only apply force if within threshold
+            if (distance > 0.001f && distance < threshold) {
+                // Normalize direction
+                glm::vec3 direction = toCenter / distance;
 
-		// Apply constant force in direction of control point
-		glm::vec3 forceVec = direction * scale * dt;
-		p.velocity += forceVec * speedOverride->getFloat ();
-	    }
-	}
+                // Apply constant force in direction of control point
+                glm::vec3 forceVec = direction * scale * dt;
+                p.velocity += forceVec * speedOverride->getFloat ();
+            }
+        }
     };
 }
 
@@ -1518,38 +1518,38 @@ OperatorFunc CParticle::createOscillateAlphaOperator (const OscillateAlphaOperat
     DynamicValue* phaseMaxValue = op.phaseMax->value.get ();
 
     return
-	[this, freqMinValue, freqMaxValue, scaleMinValue, scaleMaxValue, phaseMinValue, phaseMaxValue] (
-	    std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
-	) {
-	    float freqMin = freqMinValue->getFloat ();
-	    float freqMax = freqMaxValue->getFloat ();
-	    float scaleMin = scaleMinValue->getFloat ();
-	    float scaleMax = scaleMaxValue->getFloat ();
-	    float phaseMin = phaseMinValue->getFloat ();
-	    float phaseMax = phaseMaxValue->getFloat ();
+        [this, freqMinValue, freqMaxValue, scaleMinValue, scaleMaxValue, phaseMinValue, phaseMaxValue] (
+            std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
+        ) {
+            float freqMin = freqMinValue->getFloat ();
+            float freqMax = freqMaxValue->getFloat ();
+            float scaleMin = scaleMinValue->getFloat ();
+            float scaleMax = scaleMaxValue->getFloat ();
+            float phaseMin = phaseMinValue->getFloat ();
+            float phaseMax = phaseMaxValue->getFloat ();
 
-	    for (uint32_t i = 0; i < count; i++) {
-		auto& p = particles[i];
+            for (uint32_t i = 0; i < count; i++) {
+                auto& p = particles[i];
 
-		// Initialize per-particle oscillator values on first use
-		if (!p.oscillateAlpha.initialized) {
-		    p.oscillateAlpha.frequency = randomFloat (m_rng, freqMin, freqMax);
-		    p.oscillateAlpha.scale = randomFloat (m_rng, scaleMin, scaleMax);
-		    p.oscillateAlpha.phase = randomFloat (m_rng, phaseMin, phaseMax + 2.0f * glm::pi<float> ());
-		    p.oscillateAlpha.base = p.alpha; // Capture initial base
-		    p.oscillateAlpha.initialized = true;
-		}
+                // Initialize per-particle oscillator values on first use
+                if (!p.oscillateAlpha.initialized) {
+                    p.oscillateAlpha.frequency = randomFloat (m_rng, freqMin, freqMax);
+                    p.oscillateAlpha.scale = randomFloat (m_rng, scaleMin, scaleMax);
+                    p.oscillateAlpha.phase = randomFloat (m_rng, phaseMin, phaseMax + 2.0f * glm::pi<float> ());
+                    p.oscillateAlpha.base = p.alpha; // Capture initial base
+                    p.oscillateAlpha.initialized = true;
+                }
 
-		// Calculate oscillation: interpolate between scaleMin and scaleMax using cosine wave
-		float w = p.oscillateAlpha.frequency;
-		float t = p.age;
-		float cosVal = (std::cos (w * t + p.oscillateAlpha.phase) + 1.0f) * 0.5f;
-		float multiplier = glm::mix (scaleMin, scaleMax, cosVal);
+                // Calculate oscillation: interpolate between scaleMin and scaleMax using cosine wave
+                float w = p.oscillateAlpha.frequency;
+                float t = p.age;
+                float cosVal = (std::cos (w * t + p.oscillateAlpha.phase) + 1.0f) * 0.5f;
+                float multiplier = glm::mix (scaleMin, scaleMax, cosVal);
 
-		// Apply to base value (alphafade updates base each frame if present)
-		p.alpha = p.oscillateAlpha.base * multiplier;
-	    }
-	};
+                // Apply to base value (alphafade updates base each frame if present)
+                p.alpha = p.oscillateAlpha.base * multiplier;
+            }
+        };
 }
 
 OperatorFunc CParticle::createOscillateSizeOperator (const OscillateSizeOperator& op) {
@@ -1561,38 +1561,38 @@ OperatorFunc CParticle::createOscillateSizeOperator (const OscillateSizeOperator
     DynamicValue* phaseMaxValue = op.phaseMax->value.get ();
 
     return
-	[this, freqMinValue, freqMaxValue, scaleMinValue, scaleMaxValue, phaseMinValue, phaseMaxValue] (
-	    std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
-	) {
-	    float freqMin = freqMinValue->getFloat ();
-	    float freqMax = freqMaxValue->getFloat ();
-	    float scaleMin = scaleMinValue->getFloat ();
-	    float scaleMax = scaleMaxValue->getFloat ();
-	    float phaseMin = phaseMinValue->getFloat ();
-	    float phaseMax = phaseMaxValue->getFloat ();
+        [this, freqMinValue, freqMaxValue, scaleMinValue, scaleMaxValue, phaseMinValue, phaseMaxValue] (
+            std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float, float
+        ) {
+            float freqMin = freqMinValue->getFloat ();
+            float freqMax = freqMaxValue->getFloat ();
+            float scaleMin = scaleMinValue->getFloat ();
+            float scaleMax = scaleMaxValue->getFloat ();
+            float phaseMin = phaseMinValue->getFloat ();
+            float phaseMax = phaseMaxValue->getFloat ();
 
-	    for (uint32_t i = 0; i < count; i++) {
-		auto& p = particles[i];
+            for (uint32_t i = 0; i < count; i++) {
+                auto& p = particles[i];
 
-		// Initialize per-particle oscillator values on first use
-		if (!p.oscillateSize.initialized) {
-		    p.oscillateSize.frequency = randomFloat (m_rng, freqMin, freqMax);
-		    p.oscillateSize.scale = randomFloat (m_rng, scaleMin, scaleMax);
-		    p.oscillateSize.phase = randomFloat (m_rng, phaseMin, phaseMax + 2.0f * glm::pi<float> ());
-		    p.oscillateSize.base = p.size; // Capture initial base
-		    p.oscillateSize.initialized = true;
-		}
+                // Initialize per-particle oscillator values on first use
+                if (!p.oscillateSize.initialized) {
+                    p.oscillateSize.frequency = randomFloat (m_rng, freqMin, freqMax);
+                    p.oscillateSize.scale = randomFloat (m_rng, scaleMin, scaleMax);
+                    p.oscillateSize.phase = randomFloat (m_rng, phaseMin, phaseMax + 2.0f * glm::pi<float> ());
+                    p.oscillateSize.base = p.size; // Capture initial base
+                    p.oscillateSize.initialized = true;
+                }
 
-		// Calculate oscillation: interpolate between scaleMin and scaleMax using cosine wave
-		float w = p.oscillateSize.frequency;
-		float t = p.age;
-		float cosVal = (std::cos (w * t + p.oscillateSize.phase) + 1.0f) * 0.5f;
-		float multiplier = glm::mix (scaleMin, scaleMax, cosVal);
+                // Calculate oscillation: interpolate between scaleMin and scaleMax using cosine wave
+                float w = p.oscillateSize.frequency;
+                float t = p.age;
+                float cosVal = (std::cos (w * t + p.oscillateSize.phase) + 1.0f) * 0.5f;
+                float multiplier = glm::mix (scaleMin, scaleMax, cosVal);
 
-		// Apply to base value (sizeChange updates base each frame if present)
-		p.size = p.oscillateSize.base * multiplier;
-	    }
-	};
+                // Apply to base value (sizeChange updates base each frame if present)
+                p.size = p.oscillateSize.base * multiplier;
+            }
+        };
 }
 
 OperatorFunc CParticle::createOscillatePositionOperator (const OscillatePositionOperator& op) {
@@ -1606,47 +1606,47 @@ OperatorFunc CParticle::createOscillatePositionOperator (const OscillatePosition
     DynamicValue* speedOverride = m_particle.instanceOverride.speed->value.get ();
 
     return [this, freqMinValue, freqMaxValue, scaleMinValue, scaleMaxValue, phaseMinValue, phaseMaxValue, maskValue,
-	    speedOverride] (
-	       std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float,
-	       float dt
-	   ) {
-	float freqMin = freqMinValue->getFloat ();
-	float freqMax = freqMaxValue->getFloat ();
-	float scaleMin = scaleMinValue->getFloat ();
-	float scaleMax = scaleMaxValue->getFloat ();
-	float phaseMin = phaseMinValue->getFloat ();
-	float phaseMax = phaseMaxValue->getFloat ();
-	glm::vec3 mask = maskValue->getVec3 ();
+            speedOverride] (
+               std::vector<ParticleInstance>& particles, uint32_t count, const std::vector<ControlPointData>&, float,
+               float dt
+           ) {
+        float freqMin = freqMinValue->getFloat ();
+        float freqMax = freqMaxValue->getFloat ();
+        float scaleMin = scaleMinValue->getFloat ();
+        float scaleMax = scaleMaxValue->getFloat ();
+        float phaseMin = phaseMinValue->getFloat ();
+        float phaseMax = phaseMaxValue->getFloat ();
+        glm::vec3 mask = maskValue->getVec3 ();
 
-	for (uint32_t i = 0; i < count; i++) {
-	    auto& p = particles[i];
+        for (uint32_t i = 0; i < count; i++) {
+            auto& p = particles[i];
 
-	    // Initialize per-particle oscillator values on first use (per axis)
-	    if (!p.oscillatePosition.initialized) {
-		for (int axis = 0; axis < 3; axis++) {
-		    p.oscillatePosition.frequency[axis] = randomFloat (m_rng, freqMin, freqMax);
-		    p.oscillatePosition.scale[axis] = randomFloat (m_rng, scaleMin, scaleMax);
-		    p.oscillatePosition.phase[axis]
-			= randomFloat (m_rng, phaseMin, phaseMax + 2.0f * glm::pi<float> ());
-		}
-		p.oscillatePosition.initialized = true;
-	    }
+            // Initialize per-particle oscillator values on first use (per axis)
+            if (!p.oscillatePosition.initialized) {
+                for (int axis = 0; axis < 3; axis++) {
+                    p.oscillatePosition.frequency[axis] = randomFloat (m_rng, freqMin, freqMax);
+                    p.oscillatePosition.scale[axis] = randomFloat (m_rng, scaleMin, scaleMax);
+                    p.oscillatePosition.phase[axis]
+                        = randomFloat (m_rng, phaseMin, phaseMax + 2.0f * glm::pi<float> ());
+                }
+                p.oscillatePosition.initialized = true;
+            }
 
-	    // Calculate position delta for each axis
-	    float t = p.age;
-	    glm::vec3 delta (0.0f);
+            // Calculate position delta for each axis
+            float t = p.age;
+            glm::vec3 delta (0.0f);
 
-	    for (int axis = 0; axis < 3; axis++) {
-		float w = 2.0f * glm::pi<float> () * p.oscillatePosition.frequency[axis] / (2.0f * glm::pi<float> ());
-		// Derivative of cos is -sin, multiply by dt for position change
-		float move
-		    = -p.oscillatePosition.scale[axis] * w * std::sin (w * t + p.oscillatePosition.phase[axis]) * dt;
-		// Apply mask as bias multiplier for this axis
-		delta[axis] = move * mask[axis] * speedOverride->getFloat ();
-	    }
+            for (int axis = 0; axis < 3; axis++) {
+                float w = 2.0f * glm::pi<float> () * p.oscillatePosition.frequency[axis] / (2.0f * glm::pi<float> ());
+                // Derivative of cos is -sin, multiply by dt for position change
+                float move
+                    = -p.oscillatePosition.scale[axis] * w * std::sin (w * t + p.oscillatePosition.phase[axis]) * dt;
+                // Apply mask as bias multiplier for this axis
+                delta[axis] = move * mask[axis] * speedOverride->getFloat ();
+            }
 
-	    p.position += delta;
-	}
+            p.position += delta;
+        }
     };
 }
 
@@ -1654,8 +1654,8 @@ OperatorFunc CParticle::createOscillatePositionOperator (const OscillatePosition
 
 void CParticle::setupPass () {
     if (!m_particle.material || !m_particle.material->material || m_particle.material->material->passes.empty ()) {
-	sLog.error ("No valid material for particle ", m_particle.name);
-	return;
+        sLog.error ("No valid material for particle ", m_particle.name);
+        return;
     }
 
     const auto& firstPass = **m_particle.material->material->passes.begin ();
@@ -1664,13 +1664,13 @@ void CParticle::setupPass () {
     m_passOverride = std::make_unique<ImageEffectPassOverride> ();
     m_passOverride->combos["THICKFORMAT"] = 1;
     if (m_useRopeRenderer) {
-	m_passOverride->shaderOverride = "genericropeparticle";
+        m_passOverride->shaderOverride = "genericropeparticle";
     }
     if (m_spritesheetFrames > 0) {
-	m_passOverride->combos["SPRITESHEET"] = 1;
+        m_passOverride->combos["SPRITESHEET"] = 1;
     }
     if (m_useTrailRenderer) {
-	m_passOverride->combos["TRAILRENDERER"] = 1;
+        m_passOverride->combos["TRAILRENDERER"] = 1;
     }
 
     // Force texture 0 to use the input (particle texture) rather than the shader's
@@ -1690,12 +1690,12 @@ void CParticle::setupPass () {
     // black reads on NVIDIA. By placing a copy FBO with the same name in our FBOProvider,
     // CPass resolves g_Texture3 to the copy instead. We blit the scene content before each render.
     if (m_hasRefract) {
-	auto sceneFBO = getScene ().getFBO ();
-	float w = static_cast<float> (sceneFBO->getRealWidth ());
-	float h = static_cast<float> (sceneFBO->getRealHeight ());
-	m_refractFBO = m_passFBOProvider->create (
-	    "_rt_FullFrameBuffer", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0f, { w, h }, { w, h }
-	);
+        auto sceneFBO = getScene ().getFBO ();
+        float w = static_cast<float> (sceneFBO->getRealWidth ());
+        float h = static_cast<float> (sceneFBO->getRealHeight ());
+        m_refractFBO = m_passFBOProvider->create (
+            "_rt_FullFrameBuffer", TextureFormat_ARGB8888, TextureFlags_ClampUVs, 1.0f, { w, h }, { w, h }
+        );
     }
 
     // Create CPass with the WP particle shader
@@ -1726,78 +1726,78 @@ void CParticle::setupPass () {
     const GLuint program = m_pass->getProgramID ();
 
     if (m_useRopeRenderer) {
-	// Rope vertex layout: 7 attributes, 26 floats/vertex, stride=104 bytes
-	// a_PositionVec4(4) + a_TexCoordVec4(4) + a_TexCoordVec4C1(4) + a_TexCoordVec4C2(4)
-	// + a_TexCoordVec4C3(4) + a_TexCoordC4(2) + a_Color(4) = 26
-	const GLsizei stride = sizeof (float) * ROPE_FLOATS_PER_VERTEX;
+        // Rope vertex layout: 7 attributes, 26 floats/vertex, stride=104 bytes
+        // a_PositionVec4(4) + a_TexCoordVec4(4) + a_TexCoordVec4C1(4) + a_TexCoordVec4C2(4)
+        // + a_TexCoordVec4C3(4) + a_TexCoordC4(2) + a_Color(4) = 26
+        const GLsizei stride = sizeof (float) * ROPE_FLOATS_PER_VERTEX;
 
-	const GLint loc0 = glGetAttribLocation (program, "a_PositionVec4");
-	const GLint loc1 = glGetAttribLocation (program, "a_TexCoordVec4");
-	const GLint loc2 = glGetAttribLocation (program, "a_TexCoordVec4C1");
-	const GLint loc3 = glGetAttribLocation (program, "a_TexCoordVec4C2");
-	const GLint loc4 = glGetAttribLocation (program, "a_TexCoordVec4C3");
-	const GLint loc5 = glGetAttribLocation (program, "a_TexCoordC4");
-	const GLint loc6 = glGetAttribLocation (program, "a_Color");
+        const GLint loc0 = glGetAttribLocation (program, "a_PositionVec4");
+        const GLint loc1 = glGetAttribLocation (program, "a_TexCoordVec4");
+        const GLint loc2 = glGetAttribLocation (program, "a_TexCoordVec4C1");
+        const GLint loc3 = glGetAttribLocation (program, "a_TexCoordVec4C2");
+        const GLint loc4 = glGetAttribLocation (program, "a_TexCoordVec4C3");
+        const GLint loc5 = glGetAttribLocation (program, "a_TexCoordC4");
+        const GLint loc6 = glGetAttribLocation (program, "a_Color");
 
-	if (loc0 >= 0) {
-	    glEnableVertexAttribArray (loc0);
-	    glVertexAttribPointer (loc0, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 0));
-	}
-	if (loc1 >= 0) {
-	    glEnableVertexAttribArray (loc1);
-	    glVertexAttribPointer (loc1, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 4));
-	}
-	if (loc2 >= 0) {
-	    glEnableVertexAttribArray (loc2);
-	    glVertexAttribPointer (loc2, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 8));
-	}
-	if (loc3 >= 0) {
-	    glEnableVertexAttribArray (loc3);
-	    glVertexAttribPointer (loc3, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 12));
-	}
-	if (loc4 >= 0) {
-	    glEnableVertexAttribArray (loc4);
-	    glVertexAttribPointer (loc4, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 16));
-	}
-	if (loc5 >= 0) {
-	    glEnableVertexAttribArray (loc5);
-	    glVertexAttribPointer (loc5, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 20));
-	}
-	if (loc6 >= 0) {
-	    glEnableVertexAttribArray (loc6);
-	    glVertexAttribPointer (loc6, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 22));
-	}
+        if (loc0 >= 0) {
+            glEnableVertexAttribArray (loc0);
+            glVertexAttribPointer (loc0, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 0));
+        }
+        if (loc1 >= 0) {
+            glEnableVertexAttribArray (loc1);
+            glVertexAttribPointer (loc1, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 4));
+        }
+        if (loc2 >= 0) {
+            glEnableVertexAttribArray (loc2);
+            glVertexAttribPointer (loc2, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 8));
+        }
+        if (loc3 >= 0) {
+            glEnableVertexAttribArray (loc3);
+            glVertexAttribPointer (loc3, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 12));
+        }
+        if (loc4 >= 0) {
+            glEnableVertexAttribArray (loc4);
+            glVertexAttribPointer (loc4, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 16));
+        }
+        if (loc5 >= 0) {
+            glEnableVertexAttribArray (loc5);
+            glVertexAttribPointer (loc5, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 20));
+        }
+        if (loc6 >= 0) {
+            glEnableVertexAttribArray (loc6);
+            glVertexAttribPointer (loc6, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 22));
+        }
     } else {
-	// Sprite vertex layout: 5 attributes, 17 floats/vertex, stride=68 bytes
-	// a_Position(3) + a_TexCoordVec4(4) + a_Color(4) + a_TexCoordVec4C1(4) + a_TexCoordC2(2) = 17
-	const GLsizei stride = sizeof (float) * SPRITE_FLOATS_PER_VERTEX;
+        // Sprite vertex layout: 5 attributes, 17 floats/vertex, stride=68 bytes
+        // a_Position(3) + a_TexCoordVec4(4) + a_Color(4) + a_TexCoordVec4C1(4) + a_TexCoordC2(2) = 17
+        const GLsizei stride = sizeof (float) * SPRITE_FLOATS_PER_VERTEX;
 
-	const GLint loc0 = glGetAttribLocation (program, "a_Position");
-	const GLint loc1 = glGetAttribLocation (program, "a_TexCoordVec4");
-	const GLint loc2 = glGetAttribLocation (program, "a_Color");
-	const GLint loc3 = glGetAttribLocation (program, "a_TexCoordVec4C1");
-	const GLint loc4 = glGetAttribLocation (program, "a_TexCoordC2");
+        const GLint loc0 = glGetAttribLocation (program, "a_Position");
+        const GLint loc1 = glGetAttribLocation (program, "a_TexCoordVec4");
+        const GLint loc2 = glGetAttribLocation (program, "a_Color");
+        const GLint loc3 = glGetAttribLocation (program, "a_TexCoordVec4C1");
+        const GLint loc4 = glGetAttribLocation (program, "a_TexCoordC2");
 
-	if (loc0 >= 0) {
-	    glEnableVertexAttribArray (loc0);
-	    glVertexAttribPointer (loc0, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 0));
-	}
-	if (loc1 >= 0) {
-	    glEnableVertexAttribArray (loc1);
-	    glVertexAttribPointer (loc1, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 3));
-	}
-	if (loc2 >= 0) {
-	    glEnableVertexAttribArray (loc2);
-	    glVertexAttribPointer (loc2, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 7));
-	}
-	if (loc3 >= 0) {
-	    glEnableVertexAttribArray (loc3);
-	    glVertexAttribPointer (loc3, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 11));
-	}
-	if (loc4 >= 0) {
-	    glEnableVertexAttribArray (loc4);
-	    glVertexAttribPointer (loc4, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 15));
-	}
+        if (loc0 >= 0) {
+            glEnableVertexAttribArray (loc0);
+            glVertexAttribPointer (loc0, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 0));
+        }
+        if (loc1 >= 0) {
+            glEnableVertexAttribArray (loc1);
+            glVertexAttribPointer (loc1, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 3));
+        }
+        if (loc2 >= 0) {
+            glEnableVertexAttribArray (loc2);
+            glVertexAttribPointer (loc2, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 7));
+        }
+        if (loc3 >= 0) {
+            glEnableVertexAttribArray (loc3);
+            glVertexAttribPointer (loc3, 4, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 11));
+        }
+        if (loc4 >= 0) {
+            glEnableVertexAttribArray (loc4);
+            glVertexAttribPointer (loc4, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof (float) * 15));
+        }
     }
 
     glBindVertexArray (prevVAO);
@@ -1808,15 +1808,15 @@ void CParticle::setupPass () {
 
 void CParticle::setupGeometryCallbacks () {
     m_pass->setGeometryCallback (
-	// Setup attribs: save current VAO, bind particle VAO
-	[this] () {
-	    glGetIntegerv (GL_VERTEX_ARRAY_BINDING, &m_prevVAO);
-	    glBindVertexArray (m_vao);
-	},
-	// Draw geometry: indexed rendering
-	[this] () { glDrawElements (GL_TRIANGLES, m_activeIndexCount, GL_UNSIGNED_INT, nullptr); },
-	// Cleanup: restore previous VAO
-	[this] () { glBindVertexArray (m_prevVAO); }
+        // Setup attribs: save current VAO, bind particle VAO
+        [this] () {
+            glGetIntegerv (GL_VERTEX_ARRAY_BINDING, &m_prevVAO);
+            glBindVertexArray (m_vao);
+        },
+        // Draw geometry: indexed rendering
+        [this] () { glDrawElements (GL_TRIANGLES, m_activeIndexCount, GL_UNSIGNED_INT, nullptr); },
+        // Cleanup: restore previous VAO
+        [this] () { glBindVertexArray (m_prevVAO); }
     );
 }
 
@@ -1835,7 +1835,7 @@ void CParticle::setupParticleUniforms () {
 
     // REFRACT: set g_RefractAmount (shader default 0.05, may not be applied by CPass's parameter system)
     if (m_hasRefract) {
-	m_pass->addUniform ("g_RefractAmount", &m_refractAmount);
+        m_pass->addUniform ("g_RefractAmount", &m_refractAmount);
     }
 }
 
@@ -1855,30 +1855,30 @@ void CParticle::updateMatrices () {
 
     // Build model-view-projection matrix
     if ((m_particle.flags & 4) != 0) {
-	// Perspective particles use a dedicated perspective projection
-	float width = getScene ().getCamera ().getWidth ();
-	float height = getScene ().getCamera ().getHeight ();
-	float aspect = width / height;
-	float fov = glm::radians (getScene ().getCamera ().getFov ());
-	float nearz = getScene ().getCamera ().getNearZ ();
-	float farz = getScene ().getCamera ().getFarZ ();
+        // Perspective particles use a dedicated perspective projection
+        float width = getScene ().getCamera ().getWidth ();
+        float height = getScene ().getCamera ().getHeight ();
+        float aspect = width / height;
+        float fov = glm::radians (getScene ().getCamera ().getFov ());
+        float nearz = getScene ().getCamera ().getNearZ ();
+        float farz = getScene ().getCamera ().getFarZ ();
 
-	glm::mat4 perspectiveProj = glm::perspective (fov, aspect, nearz, farz);
-	glm::mat4 perspectiveView
-	    = glm::lookAt (glm::vec3 (0.0f, 0.0f, 1000.0f), glm::vec3 (0.0f, 0.0f, 0.0f), glm::vec3 (0.0f, 1.0f, 0.0f));
+        glm::mat4 perspectiveProj = glm::perspective (fov, aspect, nearz, farz);
+        glm::mat4 perspectiveView
+            = glm::lookAt (glm::vec3 (0.0f, 0.0f, 1000.0f), glm::vec3 (0.0f, 0.0f, 0.0f), glm::vec3 (0.0f, 1.0f, 0.0f));
 
-	m_viewProjectionMatrix = perspectiveProj * perspectiveView;
-	m_eyePosition = glm::vec3 (0.0f, 0.0f, 1000.0f);
+        m_viewProjectionMatrix = perspectiveProj * perspectiveView;
+        m_eyePosition = glm::vec3 (0.0f, 0.0f, 1000.0f);
     } else {
-	// Orthographic projection from scene camera
-	m_viewProjectionMatrix = getScene ().getCamera ().getProjection () * getScene ().getCamera ().getLookAt ();
-	// For 2D/orthographic scenes the camera eye is at (0,0,0). The shader's
-	// ComputeParticleTrailTangents uses cross(eyeDirection, velocity) to
-	// compute the trail ribbon width. With eye at z=0 and particles at z=0,
-	// eyeDirection is purely in XY — the cross product yields a Z-only vector
-	// that is invisible under orthographic projection. Place the eye at z=1000
-	// so the cross product produces a visible XY perpendicular direction.
-	m_eyePosition = glm::vec3 (0.0f, 0.0f, 1000.0f);
+        // Orthographic projection from scene camera
+        m_viewProjectionMatrix = getScene ().getCamera ().getProjection () * getScene ().getCamera ().getLookAt ();
+        // For 2D/orthographic scenes the camera eye is at (0,0,0). The shader's
+        // ComputeParticleTrailTangents uses cross(eyeDirection, velocity) to
+        // compute the trail ribbon width. With eye at z=0 and particles at z=0,
+        // eyeDirection is purely in XY — the cross product yields a Z-only vector
+        // that is invisible under orthographic projection. Place the eye at z=1000
+        // so the cross product produces a visible XY perpendicular direction.
+        m_eyePosition = glm::vec3 (0.0f, 0.0f, 1000.0f);
     }
 
     m_mvpMatrix = m_viewProjectionMatrix * m_modelMatrix;
@@ -1897,50 +1897,50 @@ void CParticle::updateMatrices () {
 
     // Update g_RenderVar1: spritesheet params (.x=frameWidth, .y=frameHeight, .z=numFrames, .w=textureRatio)
     if (m_spritesheetFrames > 0 && m_spritesheetCols > 0 && m_spritesheetRows > 0) {
-	float frameWidth = 1.0f / static_cast<float> (m_spritesheetCols);
-	float frameHeight = 1.0f / static_cast<float> (m_spritesheetRows);
-	float textureRatio = 1.0f;
-	if (const auto texture = getTexture ()) {
-	    // Use atlas dimensions (from resolution vec4) for textureRatio, NOT getRealWidth/Height
-	    // which returns per-frame dimensions for animated textures. The shader needs the
-	    // per-frame pixel aspect ratio: (atlasH * frameHeight) / (atlasW * frameWidth).
-	    const glm::vec4* res = texture->getResolution ();
-	    float w = res->x; // atlas/GL texture width
-	    float h = res->y; // atlas/GL texture height
-	    if (w > 0.0f) {
-		textureRatio = (h * frameHeight) / (w * frameWidth);
-	    }
-	}
-	m_renderVar1 = glm::vec4 (frameWidth, frameHeight, static_cast<float> (m_spritesheetFrames), textureRatio);
+        float frameWidth = 1.0f / static_cast<float> (m_spritesheetCols);
+        float frameHeight = 1.0f / static_cast<float> (m_spritesheetRows);
+        float textureRatio = 1.0f;
+        if (const auto texture = getTexture ()) {
+            // Use atlas dimensions (from resolution vec4) for textureRatio, NOT getRealWidth/Height
+            // which returns per-frame dimensions for animated textures. The shader needs the
+            // per-frame pixel aspect ratio: (atlasH * frameHeight) / (atlasW * frameWidth).
+            const glm::vec4* res = texture->getResolution ();
+            float w = res->x; // atlas/GL texture width
+            float h = res->y; // atlas/GL texture height
+            if (w > 0.0f) {
+                textureRatio = (h * frameHeight) / (w * frameWidth);
+            }
+        }
+        m_renderVar1 = glm::vec4 (frameWidth, frameHeight, static_cast<float> (m_spritesheetFrames), textureRatio);
     } else {
-	// No spritesheet - texture ratio is height/width
-	float textureRatio = 1.0f;
-	if (const auto texture = getTexture ()) {
-	    float w = static_cast<float> (texture->getRealWidth ());
-	    float h = static_cast<float> (texture->getRealHeight ());
-	    if (w > 0.0f) {
-		textureRatio = h / w;
-	    }
-	}
-	m_renderVar1 = glm::vec4 (0.0f, 0.0f, 0.0f, textureRatio);
+        // No spritesheet - texture ratio is height/width
+        float textureRatio = 1.0f;
+        if (const auto texture = getTexture ()) {
+            float w = static_cast<float> (texture->getRealWidth ());
+            float h = static_cast<float> (texture->getRealHeight ());
+            if (w > 0.0f) {
+                textureRatio = h / w;
+            }
+        }
+        m_renderVar1 = glm::vec4 (0.0f, 0.0f, 0.0f, textureRatio);
     }
 }
 
 void CParticle::renderSprites () {
     if (m_particleCount == 0 || m_pass == nullptr) {
-	return;
+        return;
     }
 
     // Count alive particles
     uint32_t aliveCount = 0;
     for (uint32_t i = 0; i < m_particleCount; i++) {
-	if (m_particles[i].alive) {
-	    aliveCount++;
-	}
+        if (m_particles[i].alive) {
+            aliveCount++;
+        }
     }
 
     if (aliveCount == 0) {
-	return;
+        return;
     }
 
     // Build vertex data in WP shader layout:
@@ -1950,102 +1950,102 @@ void CParticle::renderSprites () {
     uint32_t indexOffset = 0;
 
     for (uint32_t i = 0; i < m_particleCount; i++) {
-	const auto& p = m_particles[i];
-	if (!p.alive) {
-	    continue;
-	}
+        const auto& p = m_particles[i];
+        if (!p.alive) {
+            continue;
+        }
 
-	// Skip particles with invalid values
-	if (!std::isfinite (p.position.x) || !std::isfinite (p.position.y) || !std::isfinite (p.position.z)
-	    || !std::isfinite (p.size) || p.size <= 0.0f || p.size > 10000.0f) {
-	    continue;
-	}
+        // Skip particles with invalid values
+        if (!std::isfinite (p.position.x) || !std::isfinite (p.position.y) || !std::isfinite (p.position.z)
+            || !std::isfinite (p.size) || p.size <= 0.0f || p.size > 10000.0f) {
+            continue;
+        }
 
-	// Compute the lifetime value for the WP shader's ComputeSpriteFrame.
-	// The shader computes: floor(frac(lifetime) * numFrames) to get current frame,
-	// and frac(lifetime * numFrames) for the blend factor between frames.
-	// We encode the CPU-computed p.frame (which accounts for sequenceMultiplier
-	// and animation mode) into the lifetime value the shader expects.
-	float lifetime = p.getLifetimePos ();
+        // Compute the lifetime value for the WP shader's ComputeSpriteFrame.
+        // The shader computes: floor(frac(lifetime) * numFrames) to get current frame,
+        // and frac(lifetime * numFrames) for the blend factor between frames.
+        // We encode the CPU-computed p.frame (which accounts for sequenceMultiplier
+        // and animation mode) into the lifetime value the shader expects.
+        float lifetime = p.getLifetimePos ();
 
-	if (m_spritesheetFrames > 0 && p.frame >= 0.0f) {
-	    if (m_particle.animationMode == "randomframe") {
-		// Center within the frame to avoid floating-point edge cases
-		lifetime = (p.frame + 0.5f) / static_cast<float> (m_spritesheetFrames);
-	    } else {
-		// Encode frame index + fractional blend: shader reconstructs via
-		// floor(lifetime * numFrames) = current frame,
-		// frac(lifetime * numFrames) = blend toward next frame
-		lifetime = p.frame / static_cast<float> (m_spritesheetFrames);
-	    }
-	}
+        if (m_spritesheetFrames > 0 && p.frame >= 0.0f) {
+            if (m_particle.animationMode == "randomframe") {
+                // Center within the frame to avoid floating-point edge cases
+                lifetime = (p.frame + 0.5f) / static_cast<float> (m_spritesheetFrames);
+            } else {
+                // Encode frame index + fractional blend: shader reconstructs via
+                // floor(lifetime * numFrames) = current frame,
+                // frac(lifetime * numFrames) = blend toward next frame
+                lifetime = p.frame / static_cast<float> (m_spritesheetFrames);
+            }
+        }
 
-	auto addVertex = [&] (float u, float v) {
-	    const uint32_t base = vertexIndex * SPRITE_FLOATS_PER_VERTEX;
-	    // a_Position (vec3)
-	    m_vertices[base + 0] = p.position.x;
-	    m_vertices[base + 1] = p.position.y;
-	    m_vertices[base + 2] = p.position.z;
-	    // a_TexCoordVec4 (vec4: uv.x, uv.y, rotZ, size)
-	    m_vertices[base + 3] = u;
-	    m_vertices[base + 4] = v;
-	    m_vertices[base + 5] = p.rotation.z;
-	    m_vertices[base + 6] = p.size;
-	    // a_Color (vec4: r, g, b, a)
-	    m_vertices[base + 7] = p.color.r;
-	    m_vertices[base + 8] = p.color.g;
-	    m_vertices[base + 9] = p.color.b;
-	    m_vertices[base + 10] = p.alpha;
-	    // a_TexCoordVec4C1 (vec4: vel.x, vel.y, vel.z, lifetime)
-	    m_vertices[base + 11] = p.velocity.x;
-	    m_vertices[base + 12] = p.velocity.y;
-	    m_vertices[base + 13] = p.velocity.z;
-	    m_vertices[base + 14] = lifetime;
-	    // a_TexCoordC2 (vec2: rotX, rotY)
-	    m_vertices[base + 15] = p.rotation.x;
-	    m_vertices[base + 16] = p.rotation.y;
-	    vertexIndex++;
-	};
+        auto addVertex = [&] (float u, float v) {
+            const uint32_t base = vertexIndex * SPRITE_FLOATS_PER_VERTEX;
+            // a_Position (vec3)
+            m_vertices[base + 0] = p.position.x;
+            m_vertices[base + 1] = p.position.y;
+            m_vertices[base + 2] = p.position.z;
+            // a_TexCoordVec4 (vec4: uv.x, uv.y, rotZ, size)
+            m_vertices[base + 3] = u;
+            m_vertices[base + 4] = v;
+            m_vertices[base + 5] = p.rotation.z;
+            m_vertices[base + 6] = p.size;
+            // a_Color (vec4: r, g, b, a)
+            m_vertices[base + 7] = p.color.r;
+            m_vertices[base + 8] = p.color.g;
+            m_vertices[base + 9] = p.color.b;
+            m_vertices[base + 10] = p.alpha;
+            // a_TexCoordVec4C1 (vec4: vel.x, vel.y, vel.z, lifetime)
+            m_vertices[base + 11] = p.velocity.x;
+            m_vertices[base + 12] = p.velocity.y;
+            m_vertices[base + 13] = p.velocity.z;
+            m_vertices[base + 14] = lifetime;
+            // a_TexCoordC2 (vec2: rotX, rotY)
+            m_vertices[base + 15] = p.rotation.x;
+            m_vertices[base + 16] = p.rotation.y;
+            vertexIndex++;
+        };
 
-	// 4 vertices for quad corners
-	uint32_t baseVertex = vertexIndex;
-	addVertex (0.0f, 1.0f); // 0: Bottom-left
-	addVertex (1.0f, 1.0f); // 1: Bottom-right
-	addVertex (1.0f, 0.0f); // 2: Top-right
-	addVertex (0.0f, 0.0f); // 3: Top-left
+        // 4 vertices for quad corners
+        uint32_t baseVertex = vertexIndex;
+        addVertex (0.0f, 1.0f); // 0: Bottom-left
+        addVertex (1.0f, 1.0f); // 1: Bottom-right
+        addVertex (1.0f, 0.0f); // 2: Top-right
+        addVertex (0.0f, 0.0f); // 3: Top-left
 
-	// 6 indices forming 2 triangles
-	m_indices[indexOffset++] = baseVertex + 0;
-	m_indices[indexOffset++] = baseVertex + 1;
-	m_indices[indexOffset++] = baseVertex + 2;
-	m_indices[indexOffset++] = baseVertex + 2;
-	m_indices[indexOffset++] = baseVertex + 3;
-	m_indices[indexOffset++] = baseVertex + 0;
+        // 6 indices forming 2 triangles
+        m_indices[indexOffset++] = baseVertex + 0;
+        m_indices[indexOffset++] = baseVertex + 1;
+        m_indices[indexOffset++] = baseVertex + 2;
+        m_indices[indexOffset++] = baseVertex + 2;
+        m_indices[indexOffset++] = baseVertex + 3;
+        m_indices[indexOffset++] = baseVertex + 0;
     }
 
     m_activeIndexCount = static_cast<GLsizei> (indexOffset);
     if (m_activeIndexCount == 0) {
-	return;
+        return;
     }
 
 #if !NDEBUG
     std::string str = "Rendering particles ";
     str += this->getParticle ().name + " (" + std::to_string (this->getId ()) + ", " + this->getParticle ().particleFile
-	+ ")";
+        + ")";
     glPushDebugGroup (GL_DEBUG_SOURCE_APPLICATION, 0, -1, str.c_str ());
 #endif
 
     // Upload vertex and index data
     glBindBuffer (GL_ARRAY_BUFFER, m_vbo);
     glBufferData (
-	GL_ARRAY_BUFFER, static_cast<GLsizeiptr> (vertexIndex * SPRITE_FLOATS_PER_VERTEX * sizeof (float)),
-	m_vertices.data (), GL_DYNAMIC_DRAW
+        GL_ARRAY_BUFFER, static_cast<GLsizeiptr> (vertexIndex * SPRITE_FLOATS_PER_VERTEX * sizeof (float)),
+        m_vertices.data (), GL_DYNAMIC_DRAW
     );
 
     glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, m_ebo);
     glBufferData (
-	GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr> (indexOffset * sizeof (uint32_t)), m_indices.data (),
-	GL_DYNAMIC_DRAW
+        GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr> (indexOffset * sizeof (uint32_t)), m_indices.data (),
+        GL_DYNAMIC_DRAW
     );
 
     // Update matrices and uniform data
@@ -2055,12 +2055,12 @@ void CParticle::renderSprites () {
     // This gives the shader a snapshot of what's behind the particles for refraction,
     // without a feedback loop (rendering to scene FBO while reading from copy FBO).
     if (m_hasRefract && m_refractFBO) {
-	auto sceneFBO = getScene ().getFBO ();
-	GLint w = static_cast<GLint> (sceneFBO->getRealWidth ());
-	GLint h = static_cast<GLint> (sceneFBO->getRealHeight ());
-	glBindFramebuffer (GL_READ_FRAMEBUFFER, sceneFBO->getFramebuffer ());
-	glBindFramebuffer (GL_DRAW_FRAMEBUFFER, m_refractFBO->getFramebuffer ());
-	glBlitFramebuffer (0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        auto sceneFBO = getScene ().getFBO ();
+        GLint w = static_cast<GLint> (sceneFBO->getRealWidth ());
+        GLint h = static_cast<GLint> (sceneFBO->getRealHeight ());
+        glBindFramebuffer (GL_READ_FRAMEBUFFER, sceneFBO->getFramebuffer ());
+        glBindFramebuffer (GL_DRAW_FRAMEBUFFER, m_refractFBO->getFramebuffer ());
+        glBlitFramebuffer (0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     }
 
     // The shader's ComputeParticleTrailTangents produces a right vector with a Z component
@@ -2082,7 +2082,7 @@ void CParticle::renderSprites () {
 
 void CParticle::renderRope () {
     if (m_particleCount < 2 || m_pass == nullptr) {
-	return;
+        return;
     }
 
     // Array is already in spawn order (oldest at index 0) thanks to order-preserving
@@ -2107,11 +2107,11 @@ void CParticle::renderRope () {
 
     // Catmull-Rom spline evaluation
     auto catmullRom = [] (const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3,
-			  float t) -> glm::vec3 {
-	float t2 = t * t, t3 = t2 * t;
-	return 0.5f
-	    * ((2.0f * p1) + (-p0 + p2) * t + (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2
-	       + (-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3);
+                          float t) -> glm::vec3 {
+        float t2 = t * t, t3 = t2 * t;
+        return 0.5f
+            * ((2.0f * p1) + (-p0 + p2) * t + (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2
+               + (-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3);
     };
 
     // First pass: evaluate spline to get all interpolated points
@@ -2122,26 +2122,26 @@ void CParticle::renderRope () {
     std::vector<glm::vec4> splineColors (totalPoints); // rgba
 
     for (uint32_t i = 0; i < numSegments; i++) {
-	const auto& p1 = m_particles[i];
-	const auto& p2 = m_particles[i + 1];
-	const auto& p0 = (i > 0) ? m_particles[i - 1] : p1;
-	const auto& p3 = (i + 2 < aliveCount) ? m_particles[i + 2] : p2;
+        const auto& p1 = m_particles[i];
+        const auto& p2 = m_particles[i + 1];
+        const auto& p0 = (i > 0) ? m_particles[i - 1] : p1;
+        const auto& p3 = (i + 2 < aliveCount) ? m_particles[i + 2] : p2;
 
-	for (int k = 0; k < subdivision; k++) {
-	    float t = static_cast<float> (k) / static_cast<float> (subdivision);
-	    uint32_t idx = i * subdivision + k;
+        for (int k = 0; k < subdivision; k++) {
+            float t = static_cast<float> (k) / static_cast<float> (subdivision);
+            uint32_t idx = i * subdivision + k;
 
-	    splinePositions[idx] = catmullRom (p0.position, p1.position, p2.position, p3.position, t);
-	    splineSizes[idx] = glm::mix (p1.size, p2.size, t);
-	    splineColors[idx] = glm::mix (glm::vec4 (p1.color, p1.alpha), glm::vec4 (p2.color, p2.alpha), t);
-	}
+            splinePositions[idx] = catmullRom (p0.position, p1.position, p2.position, p3.position, t);
+            splineSizes[idx] = glm::mix (p1.size, p2.size, t);
+            splineColors[idx] = glm::mix (glm::vec4 (p1.color, p1.alpha), glm::vec4 (p2.color, p2.alpha), t);
+        }
     }
     // Last point is the final particle
     {
-	const auto& pLast = m_particles[aliveCount - 1];
-	splinePositions[totalPoints - 1] = pLast.position;
-	splineSizes[totalPoints - 1] = pLast.size;
-	splineColors[totalPoints - 1] = glm::vec4 (pLast.color, pLast.alpha);
+        const auto& pLast = m_particles[aliveCount - 1];
+        splinePositions[totalPoints - 1] = pLast.position;
+        splineSizes[totalPoints - 1] = pLast.size;
+        splineColors[totalPoints - 1] = glm::vec4 (pLast.color, pLast.alpha);
     }
 
     // Second pass: build quads from consecutive spline points.
@@ -2163,126 +2163,126 @@ void CParticle::renderRope () {
     float totalArcLength = 0.0f;
 
     if (useSmoothing) {
-	cumulativeArcLength.resize (totalPoints, 0.0f);
-	for (uint32_t i = 1; i < totalPoints; i++) {
-	    totalArcLength += glm::distance (splinePositions[i], splinePositions[i - 1]);
-	    cumulativeArcLength[i] = totalArcLength;
-	}
+        cumulativeArcLength.resize (totalPoints, 0.0f);
+        for (uint32_t i = 1; i < totalPoints; i++) {
+            totalArcLength += glm::distance (splinePositions[i], splinePositions[i - 1]);
+            cumulativeArcLength[i] = totalArcLength;
+        }
     }
 
     // UV scrolling: shift UV along the rope over time (1 UV cycle per second)
     float scrollOffset = 0.0f;
     if (m_ropeUVScrolling && usableLength > 0.0f) {
-	scrollOffset = std::fmod (static_cast<float> (g_Time), 10000.0f) * usableLength;
+        scrollOffset = std::fmod (static_cast<float> (g_Time), 10000.0f) * usableLength;
     }
 
     for (uint32_t s = 0; s < totalSubSegments; s++) {
-	const glm::vec3& posStart = splinePositions[s];
-	const glm::vec3& posEnd = splinePositions[s + 1];
-	float sizeStart = splineSizes[s];
-	float sizeEnd = splineSizes[s + 1];
-	const glm::vec4& colorStart = splineColors[s];
-	const glm::vec4& colorEnd = splineColors[s + 1];
+        const glm::vec3& posStart = splinePositions[s];
+        const glm::vec3& posEnd = splinePositions[s + 1];
+        float sizeStart = splineSizes[s];
+        float sizeEnd = splineSizes[s + 1];
+        const glm::vec4& colorStart = splineColors[s];
+        const glm::vec4& colorEnd = splineColors[s + 1];
 
-	// Neighboring points for shader tangent computation (CP0/CP1)
-	const glm::vec3& posPrev = (s > 0) ? splinePositions[s - 1] : posStart;
-	const glm::vec3& posAfter = (s + 2 < totalPoints) ? splinePositions[s + 2] : posEnd;
+        // Neighboring points for shader tangent computation (CP0/CP1)
+        const glm::vec3& posPrev = (s > 0) ? splinePositions[s - 1] : posStart;
+        const glm::vec3& posAfter = (s + 2 < totalPoints) ? splinePositions[s + 2] : posEnd;
 
-	// Compute trailPosition for UV mapping
-	float trailPosition;
-	if (useSmoothing && totalArcLength > 0.0f) {
-	    // Arc-length parameterization: map cumulative distance to sub-segment space
-	    trailPosition = cumulativeArcLength[s] / totalArcLength * static_cast<float> (totalSubSegments);
-	} else {
-	    trailPosition = static_cast<float> (s);
-	}
-	trailPosition += scrollOffset;
+        // Compute trailPosition for UV mapping
+        float trailPosition;
+        if (useSmoothing && totalArcLength > 0.0f) {
+            // Arc-length parameterization: map cumulative distance to sub-segment space
+            trailPosition = cumulativeArcLength[s] / totalArcLength * static_cast<float> (totalSubSegments);
+        } else {
+            trailPosition = static_cast<float> (s);
+        }
+        trailPosition += scrollOffset;
 
-	auto addRopeVertex = [&] (float uvX, float uvY) {
-	    const uint32_t base = vertexIndex * ROPE_FLOATS_PER_VERTEX;
+        auto addRopeVertex = [&] (float uvX, float uvY) {
+            const uint32_t base = vertexIndex * ROPE_FLOATS_PER_VERTEX;
 
-	    // a_PositionVec4: startPos.xyz, sizeStart
-	    m_vertices[base + 0] = posStart.x;
-	    m_vertices[base + 1] = posStart.y;
-	    m_vertices[base + 2] = posStart.z;
-	    m_vertices[base + 3] = sizeStart;
+            // a_PositionVec4: startPos.xyz, sizeStart
+            m_vertices[base + 0] = posStart.x;
+            m_vertices[base + 1] = posStart.y;
+            m_vertices[base + 2] = posStart.z;
+            m_vertices[base + 3] = sizeStart;
 
-	    // a_TexCoordVec4: endPos.xyz, trailLength
-	    m_vertices[base + 4] = posEnd.x;
-	    m_vertices[base + 5] = posEnd.y;
-	    m_vertices[base + 6] = posEnd.z;
-	    m_vertices[base + 7] = trailLength;
+            // a_TexCoordVec4: endPos.xyz, trailLength
+            m_vertices[base + 4] = posEnd.x;
+            m_vertices[base + 5] = posEnd.y;
+            m_vertices[base + 6] = posEnd.z;
+            m_vertices[base + 7] = trailLength;
 
-	    // a_TexCoordVec4C1: CP0.xyz (neighbor before start), trailPosition
-	    m_vertices[base + 8] = posPrev.x;
-	    m_vertices[base + 9] = posPrev.y;
-	    m_vertices[base + 10] = posPrev.z;
-	    m_vertices[base + 11] = trailPosition;
+            // a_TexCoordVec4C1: CP0.xyz (neighbor before start), trailPosition
+            m_vertices[base + 8] = posPrev.x;
+            m_vertices[base + 9] = posPrev.y;
+            m_vertices[base + 10] = posPrev.z;
+            m_vertices[base + 11] = trailPosition;
 
-	    // a_TexCoordVec4C2: CP1.xyz (neighbor after end), sizeEnd
-	    m_vertices[base + 12] = posAfter.x;
-	    m_vertices[base + 13] = posAfter.y;
-	    m_vertices[base + 14] = posAfter.z;
-	    m_vertices[base + 15] = sizeEnd;
+            // a_TexCoordVec4C2: CP1.xyz (neighbor after end), sizeEnd
+            m_vertices[base + 12] = posAfter.x;
+            m_vertices[base + 13] = posAfter.y;
+            m_vertices[base + 14] = posAfter.z;
+            m_vertices[base + 15] = sizeEnd;
 
-	    // a_TexCoordVec4C3: colorEnd.rgba
-	    m_vertices[base + 16] = colorEnd.r;
-	    m_vertices[base + 17] = colorEnd.g;
-	    m_vertices[base + 18] = colorEnd.b;
-	    m_vertices[base + 19] = colorEnd.a;
+            // a_TexCoordVec4C3: colorEnd.rgba
+            m_vertices[base + 16] = colorEnd.r;
+            m_vertices[base + 17] = colorEnd.g;
+            m_vertices[base + 18] = colorEnd.b;
+            m_vertices[base + 19] = colorEnd.a;
 
-	    // a_TexCoordC4: uvs.xy
-	    m_vertices[base + 20] = uvX;
-	    m_vertices[base + 21] = uvY;
+            // a_TexCoordC4: uvs.xy
+            m_vertices[base + 20] = uvX;
+            m_vertices[base + 21] = uvY;
 
-	    // a_Color: colorStart.rgba
-	    m_vertices[base + 22] = colorStart.r;
-	    m_vertices[base + 23] = colorStart.g;
-	    m_vertices[base + 24] = colorStart.b;
-	    m_vertices[base + 25] = colorStart.a;
+            // a_Color: colorStart.rgba
+            m_vertices[base + 22] = colorStart.r;
+            m_vertices[base + 23] = colorStart.g;
+            m_vertices[base + 24] = colorStart.b;
+            m_vertices[base + 25] = colorStart.a;
 
-	    vertexIndex++;
-	};
+            vertexIndex++;
+        };
 
-	// Quad: 4 vertices (left/right at start/end of segment)
-	uint32_t baseVertex = vertexIndex;
-	addRopeVertex (0.0f, 0.0f); // left at start
-	addRopeVertex (1.0f, 0.0f); // right at start
-	addRopeVertex (1.0f, 1.0f); // right at end
-	addRopeVertex (0.0f, 1.0f); // left at end
+        // Quad: 4 vertices (left/right at start/end of segment)
+        uint32_t baseVertex = vertexIndex;
+        addRopeVertex (0.0f, 0.0f); // left at start
+        addRopeVertex (1.0f, 0.0f); // right at start
+        addRopeVertex (1.0f, 1.0f); // right at end
+        addRopeVertex (0.0f, 1.0f); // left at end
 
-	// 2 triangles
-	m_indices[indexOffset++] = baseVertex + 0;
-	m_indices[indexOffset++] = baseVertex + 1;
-	m_indices[indexOffset++] = baseVertex + 2;
-	m_indices[indexOffset++] = baseVertex + 2;
-	m_indices[indexOffset++] = baseVertex + 3;
-	m_indices[indexOffset++] = baseVertex + 0;
+        // 2 triangles
+        m_indices[indexOffset++] = baseVertex + 0;
+        m_indices[indexOffset++] = baseVertex + 1;
+        m_indices[indexOffset++] = baseVertex + 2;
+        m_indices[indexOffset++] = baseVertex + 2;
+        m_indices[indexOffset++] = baseVertex + 3;
+        m_indices[indexOffset++] = baseVertex + 0;
     }
 
     m_activeIndexCount = static_cast<GLsizei> (indexOffset);
     if (m_activeIndexCount == 0) {
-	return;
+        return;
     }
 
 #if !NDEBUG
     std::string str = "Rendering rope particles ";
     str += this->getParticle ().name + " (" + std::to_string (this->getId ()) + ", " + this->getParticle ().particleFile
-	+ ")";
+        + ")";
     glPushDebugGroup (GL_DEBUG_SOURCE_APPLICATION, 0, -1, str.c_str ());
 #endif
 
     // Upload vertex and index data
     glBindBuffer (GL_ARRAY_BUFFER, m_vbo);
     glBufferData (
-	GL_ARRAY_BUFFER, static_cast<GLsizeiptr> (vertexIndex * ROPE_FLOATS_PER_VERTEX * sizeof (float)),
-	m_vertices.data (), GL_DYNAMIC_DRAW
+        GL_ARRAY_BUFFER, static_cast<GLsizeiptr> (vertexIndex * ROPE_FLOATS_PER_VERTEX * sizeof (float)),
+        m_vertices.data (), GL_DYNAMIC_DRAW
     );
 
     glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, m_ebo);
     glBufferData (
-	GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr> (indexOffset * sizeof (uint32_t)), m_indices.data (),
-	GL_DYNAMIC_DRAW
+        GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr> (indexOffset * sizeof (uint32_t)), m_indices.data (),
+        GL_DYNAMIC_DRAW
     );
 
     // Update matrices and uniform data
@@ -2290,12 +2290,12 @@ void CParticle::renderRope () {
 
     // For REFRACT: blit current scene content into the copy FBO before rendering
     if (m_hasRefract && m_refractFBO) {
-	auto sceneFBO = getScene ().getFBO ();
-	GLint w = static_cast<GLint> (sceneFBO->getRealWidth ());
-	GLint h = static_cast<GLint> (sceneFBO->getRealHeight ());
-	glBindFramebuffer (GL_READ_FRAMEBUFFER, sceneFBO->getFramebuffer ());
-	glBindFramebuffer (GL_DRAW_FRAMEBUFFER, m_refractFBO->getFramebuffer ());
-	glBlitFramebuffer (0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        auto sceneFBO = getScene ().getFBO ();
+        GLint w = static_cast<GLint> (sceneFBO->getRealWidth ());
+        GLint h = static_cast<GLint> (sceneFBO->getRealHeight ());
+        glBindFramebuffer (GL_READ_FRAMEBUFFER, sceneFBO->getFramebuffer ());
+        glBindFramebuffer (GL_DRAW_FRAMEBUFFER, m_refractFBO->getFramebuffer ());
+        glBlitFramebuffer (0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     }
 
     glEnable (GL_DEPTH_CLAMP);
