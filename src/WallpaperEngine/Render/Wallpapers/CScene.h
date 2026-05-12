@@ -27,6 +27,8 @@ public:
 
     [[nodiscard]] int getWidth () const override;
     [[nodiscard]] int getHeight () const override;
+    /** Height of the output viewport in physical pixels (set each frame from renderFrame). */
+    [[nodiscard]] int getOutputHeight () const;
 
     const glm::vec2* getMousePosition () const;
     const glm::vec2* getMousePositionLast () const;
@@ -55,6 +57,7 @@ private:
     glm::vec2 m_mousePositionLast = {};
     glm::vec2 m_mousePositionNormalized = {};
     glm::vec2 m_parallaxDisplacement = {};
+    int m_outputHeight = 0;
     std::shared_ptr<const CFBO> _rt_4FrameBuffer = nullptr;
     std::shared_ptr<const CFBO> _rt_8FrameBuffer = nullptr;
     std::shared_ptr<const CFBO> _rt_Bloom = nullptr;

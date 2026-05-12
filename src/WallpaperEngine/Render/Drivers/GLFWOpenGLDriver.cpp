@@ -45,7 +45,7 @@ GLFWOpenGLDriver::GLFWOpenGLDriver (const char* windowTitle, ApplicationContext&
 #endif /* DEBUG */
 
     // create window, size doesn't matter as long as we don't show it
-    this->m_window = glfwCreateWindow (1280, 1080, windowTitle, nullptr, nullptr);
+    this->m_window = glfwCreateWindow (1920, 1080, windowTitle, nullptr, nullptr);
 
     if (this->m_window == nullptr) {
         sLog.exception ("Cannot create window");

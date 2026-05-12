@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iterator>
@@ -185,6 +186,16 @@ void CText::rebuildMeshIfNeeded () {
         return;
     }
 
+    // WE renders text at a pixelSize that maps to the OUTPUT resolution, not the scene FBO.
+    // The scene FBO (e.g. 3840×2160) gets composited down to the output window (e.g. 1920×1080),
+    // so glyphs need to be 2× larger in the FBO to appear the correct size on screen.
+    // Formula: pixelSize = fontSize * (sceneH / outputH)
+    const float sceneH = static_cast<float> (this->getScene ().getHeight ());
+    const float outputH = static_cast<float> (this->getScene ().getOutputHeight ());
+    const float sceneToOutputScale = (outputH > 0.0f) ? (sceneH / outputH) : 1.0f;
+    const auto fontPixelSize
+        = static_cast<uint32_t> (std::max (std::lround (static_cast<double> (fontSize * sceneToOutputScale)), 8L));
+
     if (!this->m_atlas || fontSize != this->m_cachedSize || fontPath != this->m_cachedFont) {
         // Prefer VFS stream; workshop fonts usually don't exist as real OS files.
         const auto stream = this->getAssetLocator ().read (fontPath);
@@ -193,7 +204,7 @@ void CText::rebuildMeshIfNeeded () {
 
         if (!fontBytes.empty ()) {
             this->m_atlas = std::make_shared<WallpaperEngine::Render::Text::FontAtlas> (
-                std::move (fontBytes), static_cast<uint32_t> (std::max (fontSize, 8.0f))
+                std::move (fontBytes), fontPixelSize
             );
         } else {
             throw std::runtime_error ("empty font stream");
@@ -216,7 +227,6 @@ void CText::rebuildMeshIfNeeded () {
     const float sx = scale.x;
     const float sy = scale.y;
     const float sceneW = static_cast<float> (this->getScene ().getWidth ());
-    const float sceneH = static_cast<float> (this->getScene ().getHeight ());
 
     const std::string hAlign = lowerAscii (this->m_text.horizontalAlign);
     const std::string vAlign = lowerAscii (this->m_text.verticalAlign);
@@ -243,7 +253,7 @@ void CText::rebuildMeshIfNeeded () {
         lineWidths.push_back (w);
     }
 
-    const float lineH = fontSize * sy;
+    const float lineH = fontPixelSize * sy;
     const auto lineStartX = [&] (const float lineWidth) {
         float x = origin.x - sceneW / 2.0f;
         if (hAlign.find ("center") != std::string::npos) {

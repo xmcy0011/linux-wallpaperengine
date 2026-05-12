@@ -270,6 +270,11 @@ void CScene::addObjectToRenderOrder (const Object& object) {
 Camera& CScene::getCamera () const { return *this->m_camera; }
 
 void CScene::renderFrame (const glm::ivec4& viewport) {
+    // store output viewport height so text rendering can compensate for FBO→output downscaling
+    if (viewport.w > 0) {
+        this->m_outputHeight = viewport.w;
+    }
+
     // ensure the virtual mouse position is up to date
     this->updateMouse (viewport);
 
@@ -355,6 +360,10 @@ const Scene& CScene::getScene () const { return *this->getWallpaperData ().as<Sc
 int CScene::getWidth () const { return this->m_camera->getWidth (); }
 
 int CScene::getHeight () const { return this->m_camera->getHeight (); }
+
+int CScene::getOutputHeight () const {
+    return this->m_outputHeight > 0 ? this->m_outputHeight : this->m_camera->getHeight ();
+}
 
 const glm::vec2* CScene::getMousePosition () const { return &this->m_mousePosition; }
 
