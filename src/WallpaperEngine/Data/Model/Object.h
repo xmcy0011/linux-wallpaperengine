@@ -125,30 +125,40 @@ public:
     ~Image () override = default;
 };
 
+/**
+ * Text object data. Phase 1 of text support covers only static text;
+ * dynamic (script-driven) text captures the script source for a future
+ * pass but renders whatever initial value the scene provides.
+ */
 struct TextData {
-    /** the text content */
-    UserSettingUniquePtr text;
-    /** the font path */
-    UserSettingUniquePtr font;
-    /** the font size */
-    UserSettingUniquePtr fontSize;
-    /** the visibility of the text */
-    UserSettingUniquePtr visible;
-    /** the color of the text, vec3/vec4 */
-    UserSettingUniquePtr color;
-    /** the scale of the text */
-    UserSettingUniquePtr scale;
-    /** the angles of the text */
-    UserSettingUniquePtr angles;
-    /** the alignment of the text, center / left / right + top/bottom */
-    std::string horizontalAlign;
-    /** the vertical alignment of the text */
-    std::string verticalAlign;
-    /** the size of the text, optional: layout box */
+    /** Initial text content to render (for scripted text, this is the `value` placeholder) */
+    std::string text;
+    /** Scripted text source — full JS, resolved inline or loaded from a .js asset. Empty for static text. */
+    std::string script;
+    /** Typed initial values for the script's scriptProperties, keyed by property name */
+    std::map<std::string, UserSettingUniquePtr> scriptProperties;
+    /** Font reference from scene (e.g. "fonts/VCR_OSD_MONO.ttf" or "systemfont_arial") */
+    std::string font;
+    /** Font size in points */
+    float pointsize;
+    /** Bounding box size */
     glm::vec2 size;
-    /** the parallax depth of the text */
-    UserSettingUniquePtr parallaxDepth;
+    /** Scale (x, y, z) */
+    UserSettingUniquePtr scale;
+    /** Text color as linear-space RGB */
+    UserSettingUniquePtr color;
+    /** Alpha multiplier */
+    UserSettingUniquePtr alpha;
+    /** Whether the text is visible */
+    UserSettingUniquePtr visible;
+    /** Horizontal alignment: "left", "center", "right" */
+    std::string alignment;
+    /** Vertical alignment: "top", "center", "bottom" */
+    std::string verticalalign;
+    /** Padding inside the bounding box */
+    int padding;
 };
+
 
 class Text : public Object, public TextData {
 public:

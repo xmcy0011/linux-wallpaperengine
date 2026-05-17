@@ -272,6 +272,7 @@ Camera& CScene::getCamera () const { return *this->m_camera; }
 void CScene::renderFrame (const glm::ivec4& viewport) {
     // store output viewport height so text rendering can compensate for FBO→output downscaling
     if (viewport.w > 0) {
+        this->m_outputWidth = viewport.z;
         this->m_outputHeight = viewport.w;
     }
 
@@ -361,8 +362,26 @@ int CScene::getWidth () const { return this->m_camera->getWidth (); }
 
 int CScene::getHeight () const { return this->m_camera->getHeight (); }
 
+int CScene::getOutputWidth () const {
+    return this->m_outputWidth > 0 ? this->m_outputWidth : this->m_camera->getWidth ();
+}
+
 int CScene::getOutputHeight () const {
     return this->m_outputHeight > 0 ? this->m_outputHeight : this->m_camera->getHeight ();
+}
+
+float CScene::getTime () const { return g_Time; }
+
+float CScene::getDeltaTime () const { return g_Time - g_TimeLast; }
+
+float CScene::getFps () const {
+    const float dt = g_Time - g_TimeLast;
+    // Guard against the first frame (where g_TimeLast is 0 so dt == g_Time)
+    // and division by zero on the very first call.
+    if (dt <= 1e-6f) {
+        return 60.0f;
+    }
+    return 1.0f / dt;
 }
 
 const glm::vec2* CScene::getMousePosition () const { return &this->m_mousePosition; }
@@ -376,3 +395,8 @@ const glm::vec2* CScene::getParallaxDisplacement () const { return &this->m_para
 const std::vector<CObject*>& CScene::getObjectsByRenderOrder () const { return this->m_objectsByRenderOrder; }
 
 const CObject* CScene::getObject (int id) const { return this->m_objects.at (id); }
+
+const CObject* CScene::tryGetObject (int id) const noexcept {
+    const auto it = this->m_objects.find (id);
+    return it == this->m_objects.end () ? nullptr : it->second;
+}

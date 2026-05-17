@@ -1,15 +1,40 @@
 #pragma once
 
-#include <glm/vec3.hpp>
-#include <memory>
 #include <string>
 #include <vector>
 
+#include <GL/glew.h>
+#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
+
 #include "WallpaperEngine/Render/CObject.h"
-#include "WallpaperEngine/Render/Text/FontAtlas.h"
-#include "WallpaperEngine/Render/Wallpapers/CScene.h"
+#include "WallpaperEngine/Scripting/ScriptEngine.h"
+
+// Forward-declare FreeType types to avoid leaking the header into users.
+struct FT_LibraryRec_;
+struct FT_FaceRec_;
+typedef struct FT_LibraryRec_* FT_Library;
+typedef struct FT_FaceRec_* FT_Face;
+
+namespace WallpaperEngine::Render::Wallpapers {
+class CScene;
+}
 
 namespace WallpaperEngine::Render::Objects {
+
+/**
+ * Phase 1 text renderer.
+ *
+ * Renders static text objects as a single FreeType-rasterized RGBA texture
+ * drawn on a textured quad with its own minimal GLSL shader. Does NOT go
+ * through CRenderable / materials / passes — Phase 1 does not need effects.
+ *
+ * Phase 2 (scripted/dynamic text, alignment from properties, effect passes)
+ * is intentionally not implemented here. When the scene provides a dynamic
+ * `text: { script: "..." }` object this class captures the script source in
+ * the data model but renders an empty string — the Wallpaper Engine JS
+ * runtime required to evaluate it is out of scope for Phase 1.
+ */
 class CText final : public CObject {
 public:
     CText (Wallpapers::CScene& scene, const Data::Model::Text& text);
@@ -19,32 +44,40 @@ public:
     void render () override;
 
 private:
-    void rebuildMeshIfNeeded ();
-    void ensureProgram ();
-    glm::vec4 getColor4 () const;
+    void measureText (unsigned int fontPointSize, const std::u32string &text, int& penX, int& maxAscent, int& maxDescent);
+    // Rebuilds the glyph texture (and matching quad VBO) from the given string.
+    // Reuses existing GL handles if already allocated, so this is safe to call
+    // every time the rendered text changes.
+    void rebuildTextureFrom (const std::string text, const glm::vec2 &size);
+    void buildShader ();
+    void uploadQuadVertices ();
 
-private:
-    struct Vertex {
-        glm::vec3 pos;
-        glm::vec2 uv;
-    };
+    // setup() helpers (kept small to keep the setup flow linear).
+    bool initFreeType ();
+    bool loadEmbeddedFont ();
+    bool loadSystemFont ();
+    unsigned int computeEffectivePixelSize () const;
+    void initScriptLayer ();
 
     const Data::Model::Text& m_text;
-    WallpaperEngine::Render::Text::FontAtlasPtr m_atlas;
+    std::string m_lastRenderedText;
+    Scripting::ScriptLayerHandle m_layerHandle = Scripting::kInvalidLayerHandle;
+
+    FT_Library m_ftLibrary = nullptr;
+    FT_Face m_ftFace = nullptr;
+    std::vector<uint8_t> m_fontData;
+
+    GLuint m_texture = 0;
     GLuint m_program = 0;
     GLuint m_vao = 0;
     GLuint m_vbo = 0;
-    GLuint m_ebo = 0;
-    GLint m_uMvp = -1;
-    GLint m_uColor = -1;
-    GLint m_uAtlas = -1;
 
-    std::vector<Vertex> m_vertices;
-    std::vector<GLuint> m_indices;
-    std::string m_cachedText;
-    float m_cachedSize = -1.0f;
-    std::string m_cachedFont;
-    glm::vec3 m_cachedOrigin { 0.0f };
-    bool m_initialized = false;
+    GLint m_uMVP = -1;
+    GLint m_uColor = -1;
+    GLint m_uTexture = -1;
+
+    glm::vec2 m_quadSize = { 0.0f, 0.0f };
+
+    bool m_valid = false;
 };
 } // namespace WallpaperEngine::Render::Objects
