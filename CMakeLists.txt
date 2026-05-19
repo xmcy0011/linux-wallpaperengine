@@ -603,6 +603,148 @@ target_compile_definitions(linux-wallpaperengine-lib PUBLIC DEMOMODE=${DEMOMODE}
 # windows 使用 unicode 多字符集
 target_compile_definitions(linux-wallpaperengine-lib PUBLIC "UNICODE" "_UNICODE")
 
+#==============================================================================
+# Windows DLL Build Configuration
+#==============================================================================
+
+if(WIN32)
+	# Create the DLL library with C API
+	add_library(linux-wallpaperengine-dll SHARED
+		src/WallpaperEngine/Engine/Engine.cpp
+		src/WallpaperEngine/API/CAPI.cpp
+		${COMMON_SOURCES}
+		${WAYLAND_SOURCES}
+		${X11_SOURCES}
+		${DEMOMODE_SOURCES}
+	)
+
+	# Set DLL export definitions
+	target_compile_definitions(linux-wallpaperengine-dll PRIVATE
+		WALLPAPERENGINE_EXPORTS
+		UNICODE
+		_UNICODE
+		ERRORONLY=${ERRORONLY}
+		DEMOMODE=${DEMOMODE}
+	)
+
+	# Include directories for DLL
+	target_include_directories(linux-wallpaperengine-dll PUBLIC
+		src
+		src/External/glslang-WallpaperEngine
+		src/External/SPIRV-Cross-WallpaperEngine
+		src/External/MimeTypes
+		src/External/json/include
+		src/External/stb
+		src/External/kissfft
+		${MPV_INCLUDE_DIR}
+		${GLEW_INCLUDE_DIR}
+		${LZ4_INCLUDE_DIR}
+		${SDL2_INCLUDE_DIRS}
+		${FFMPEG_INCLUDE_DIR}
+		${PULSEAUDIO_INCLUDE_DIR}
+		${CMAKE_SOURCE_DIR}
+		${X11_INCLUDES}
+		${WAYLAND_OUTPUT_DIR}
+		${CMAKE_CURRENT_SOURCE_DIR}/include  # For public engine.h header
+	)
+
+	# Link libraries for DLL
+	target_link_libraries(linux-wallpaperengine-dll PUBLIC
+		${GLM_LINK_TARGET}
+		${OPENGL_LIBRARIES}
+		GLEW::GLEW
+		Freetype::Freetype
+		${GLUT_LIBRARIES}
+		${ZLIB_LIBRARIES}
+		${LZ4_LIBRARY}
+		${SDL2_LIBRARIES}
+		${FFMPEG_LIBRARIES}
+		${WAYLAND_LIBRARIES}
+		${X11_LIBRARIES}
+		kissfft
+		glslang
+		spirv-cross-core
+		spirv-cross-glsl
+		${GLFW_LINK_TARGET}
+		argparse
+		qjs
+	)
+
+	if(WIN32)
+		target_link_libraries(linux-wallpaperengine-dll PUBLIC Dbghelp)
+	endif()
+
+	if(ENABLE_MPV)
+		target_link_libraries(linux-wallpaperengine-dll PUBLIC ${MPV_LIBRARY})
+		target_compile_definitions(linux-wallpaperengine-dll PUBLIC WALLPAPERENGINE_ENABLE_MPV=1)
+	else()
+		target_compile_definitions(linux-wallpaperengine-dll PUBLIC WALLPAPERENGINE_ENABLE_MPV=0)
+	endif()
+
+	if(ENABLE_PULSEAUDIO)
+		target_link_libraries(linux-wallpaperengine-dll PUBLIC ${PULSEAUDIO_LIBRARY})
+		target_compile_definitions(linux-wallpaperengine-dll PUBLIC WALLPAPERENGINE_ENABLE_PULSEAUDIO=1)
+	else()
+		target_compile_definitions(linux-wallpaperengine-dll PUBLIC WALLPAPERENGINE_ENABLE_PULSEAUDIO=0)
+	endif()
+
+	# Set output directories
+	set_target_properties(linux-wallpaperengine-dll PROPERTIES
+		LIBRARY_OUTPUT_DIRECTORY ${TARGET_OUTPUT_DIRECTORY}
+		RUNTIME_OUTPUT_DIRECTORY ${TARGET_OUTPUT_DIRECTORY}
+		ARCHIVE_OUTPUT_DIRECTORY ${TARGET_OUTPUT_DIRECTORY}
+	)
+
+	# Add dependencies
+	add_dependencies(linux-wallpaperengine-dll glslang spirv-cross-core spirv-cross-glsl)
+
+	# Target compile features
+	target_compile_features(linux-wallpaperengine-dll PUBLIC cxx_std_20)
+	if(MSVC)
+		target_compile_options(linux-wallpaperengine-dll PRIVATE /FS)
+	endif()
+
+	# Platform-specific defines
+	if(X11_SUPPORT_FOUND)
+		target_compile_definitions(linux-wallpaperengine-dll PUBLIC ENABLE_X11)
+		check_function_exists(XSetIOErrorExitHandler HAVE_XSETIOERROREXITHANDLER)
+		if(HAVE_XSETIOERROREXITHANDLER)
+			target_compile_definitions(linux-wallpaperengine-dll PUBLIC HAVE_XSETIOERROREXITHANDLER=1)
+		endif()
+	endif()
+
+	if(WAYLAND_SUPPORT_FOUND)
+		target_compile_definitions(linux-wallpaperengine-dll PUBLIC ENABLE_WAYLAND)
+	endif()
+
+	if(WAYLAND_SUPPORT_FOUND AND NOT X11_SUPPORT_FOUND)
+		target_compile_definitions(linux-wallpaperengine-dll PUBLIC GLEW_EGL)
+	endif()
+
+	#==========================================================================
+	# Demo Win32 Application
+	#==========================================================================
+
+	add_executable(wallpaper-demo
+		examples/demo_win32.cpp
+	)
+
+	target_link_libraries(wallpaper-demo PRIVATE
+		linux-wallpaperengine-dll
+	)
+
+	target_compile_features(wallpaper-demo PRIVATE cxx_std_20)
+	if(MSVC)
+		target_compile_options(wallpaper-demo PRIVATE /FS)
+	endif()
+
+	# Set demo output to the same directory
+	set_target_properties(wallpaper-demo PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY ${TARGET_OUTPUT_DIRECTORY}
+	)
+
+endif()
+
 if (BUILD_TESTING)
     # tests should give as much output as possible
     target_compile_definitions(tests PRIVATE ERRORONLY=0)

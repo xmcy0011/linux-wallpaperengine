@@ -20,6 +20,10 @@
 
 #include <vector>
 
+namespace WallpaperEngine::Engine {
+class Engine;
+}
+
 namespace WallpaperEngine::Application {
 
 using namespace WallpaperEngine::Assets;
@@ -29,6 +33,8 @@ using namespace WallpaperEngine::Data::Model;
  */
 class WallpaperApplication {
 public:
+    // Allow Engine to access private setup methods for DLL usage
+    friend class WallpaperEngine::Engine::Engine;
     explicit WallpaperApplication (ApplicationContext& context);
 
     /**
