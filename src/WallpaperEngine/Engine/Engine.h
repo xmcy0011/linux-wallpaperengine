@@ -72,7 +72,7 @@ public:
 };
 
 // Main Engine class - wraps WallpaperApplication for DLL usage
-class WE_API Engine {
+class Engine {
 public:
 	Engine();
 	~Engine();
@@ -139,6 +139,15 @@ public:
 	 * Window Control
 	 *============================================================================*/
 
+	/// @brief Set the parent window handle for embedding
+	/// @param hwnd Native window handle (HWND on Windows, Window on X11, etc.)
+	/// @note Must be called before Play() to take effect
+	void SetWindowHandle(void* hwnd);
+
+	/// @brief Get the current window handle
+	/// @return Native window handle or nullptr if not set
+	void* GetWindowHandle() const;
+
 	/// @brief Show the window
 	void ShowWindow();
 
@@ -204,6 +213,9 @@ private:
 	// Configuration
 	std::string m_assetsPath;
 	int m_maxFPS;
+	void* m_windowHandle;  // External window handle (HWND on Windows, etc.)
+	glm::ivec4 m_windowGeometry; // Cached window geometry (x, y, width, height)
+	bool m_hasWindowGeometry = false;
 
 	// Error handling
 	std::string m_lastError;

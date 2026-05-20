@@ -223,6 +223,19 @@ WE_API const char* WE_GetProperty(WE_Engine* engine, const char* name);
  * Window Control (for preview/multi-window setup)
  *============================================================================*/
 
+/// @brief Set the parent window handle for embedding
+/// @param engine Engine handle
+/// @param hwnd Native window handle (HWND on Windows, Window on X11, etc.)
+/// @note Must be called before WE_Play() to take effect
+///       On Windows: pass the HWND of the parent window
+///       On X11: pass the Window ID of the parent window
+WE_API void WE_SetWindowHandle(WE_Engine* engine, void* hwnd);
+
+/// @brief Get the current window handle
+/// @param engine Engine handle
+/// @return Native window handle, or NULL if not set
+WE_API void* WE_GetWindowHandle(WE_Engine* engine);
+
 /// @brief Show the wallpaper window
 /// @param engine Engine handle
 WE_API void WE_ShowWindow(WE_Engine* engine);

@@ -743,6 +743,30 @@ if(WIN32)
 		RUNTIME_OUTPUT_DIRECTORY ${TARGET_OUTPUT_DIRECTORY}
 	)
 
+	#==========================================================================
+	# Demo Win32 UI Application (Interactive, no MFC required)
+	#==========================================================================
+
+	option(BUILD_WIN32_UI_DEMO "Build Win32 UI demo application" ON)
+	if(BUILD_WIN32_UI_DEMO)
+		add_subdirectory(examples/demo_win32_ui)
+
+		# Alias for Win32 UI demo output
+		add_dependencies(DemoWin32UI linux-wallpaperengine-dll)
+	endif()
+
+	#==========================================================================
+	# Demo MFC Application (Requires MFC component in Visual Studio)
+	#==========================================================================
+
+	option(BUILD_MFC_DEMO "Build MFC demo application (requires MFC component)" OFF)
+	if(BUILD_MFC_DEMO)
+		add_subdirectory(examples/demo_mfc)
+
+		# Alias for MFC demo output
+		add_dependencies(DemoMFC linux-wallpaperengine-dll)
+	endif()
+
 endif()
 
 if (BUILD_TESTING)

@@ -35,6 +35,10 @@ public:
 
     GLFWwindow* getWindow () const;
 
+    /// @brief Set the parent window handle for embedding (Windows only)
+    /// @param hwnd Native window handle (HWND on Windows)
+    void setParentWindow(void* hwnd);
+
 private:
     ApplicationContext& m_context;
     Input::Drivers::GLFWMouseInput m_mouseInput;

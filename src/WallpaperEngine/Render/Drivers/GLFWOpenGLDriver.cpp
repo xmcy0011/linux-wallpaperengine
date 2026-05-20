@@ -9,6 +9,15 @@
 #include <chrono>
 #include <thread>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <windows.h>
+#include <GLFW/glfw3native.h>
+#endif
+
 using namespace WallpaperEngine::Render::Drivers;
 
 void CustomGLFWErrorHandler (int errorCode, const char* reason) { sLog.error ("GLFW error ", errorCode, ": ", reason); }
@@ -165,6 +174,50 @@ void* GLFWOpenGLDriver::getProcAddress (const char* name) const {
 }
 
 GLFWwindow* GLFWOpenGLDriver::getWindow () const { return this->m_window; }
+
+void GLFWOpenGLDriver::setParentWindow (void* hwnd) {
+#ifdef _WIN32
+    if (hwnd && this->m_window) {
+        // Get the native window handle for the GLFW window
+        HWND glfwHwnd = glfwGetWin32Window (this->m_window);
+        if (glfwHwnd) {
+            // Get current window style
+            LONG style = GetWindowLong(glfwHwnd, GWL_STYLE);
+            LONG exStyle = GetWindowLong(glfwHwnd, GWL_EXSTYLE);
+
+            // Remove pop-up window styles and add child window styles
+            style &= ~(WS_POPUP | WS_CAPTION | WS_THICKFRAME | WS_OVERLAPPEDWINDOW);
+            style |= (WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+            exStyle &= ~(WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
+            exStyle |= WS_EX_NOPARENTNOTIFY;
+
+            // Set the new styles before changing parent
+            SetWindowLong(glfwHwnd, GWL_STYLE, style);
+            SetWindowLong(glfwHwnd, GWL_EXSTYLE, exStyle);
+
+            // Set the parent window to embed the GLFW window
+            SetParent(glfwHwnd, (HWND)hwnd);
+
+            // Resize and position the GLFW window to fill the parent window
+            RECT rect;
+            GetClientRect((HWND)hwnd, &rect);
+            SetWindowPos(glfwHwnd, nullptr, 0, 0, rect.right - rect.left, rect.bottom - rect.top,
+                SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+
+            // Update GLFW window size to match
+            glfwSetWindowSize(this->m_window, rect.right - rect.left, rect.bottom - rect.top);
+
+            // Show the window
+            ShowWindow(glfwHwnd, SW_SHOW);
+            glfwShowWindow(this->m_window);
+        }
+    }
+#else
+    // On other platforms (Linux/X11), we could use XReparentWindow
+    // For now, this is a no-op on non-Windows platforms
+    (void)hwnd;
+#endif
+}
 
 static void registerGLFWOpenGLDriver () {
     sVideoFactories.registerDriver (

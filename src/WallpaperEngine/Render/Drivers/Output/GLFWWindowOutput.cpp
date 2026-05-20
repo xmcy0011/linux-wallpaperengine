@@ -12,14 +12,15 @@ GLFWWindowOutput::GLFWWindowOutput (ApplicationContext& context, VideoDriver& dr
         sLog.exception ("Initializing window output when not in output mode, how did you get here?!");
     }
 
-    // window should be visible
-    driver.showWindow ();
-
     if (this->m_context.settings.render.mode == Application::ApplicationContext::EXPLICIT_WINDOW) {
         this->m_fullWidth = this->m_context.settings.render.window.geometry.z;
         this->m_fullHeight = this->m_context.settings.render.window.geometry.w;
         this->repositionWindow ();
+        // Don't show the window yet - it will be shown after setParentWindow() is called
+        // from Engine::InitializeApplication(), which embeds the GLFW window into the parent
     } else {
+        // window should be visible in normal windowed mode
+        driver.showWindow ();
         // take the size from the driver (default window size)
         this->m_fullWidth = this->m_driver.getFramebufferSize ().x;
         this->m_fullHeight = this->m_driver.getFramebufferSize ().y;

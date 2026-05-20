@@ -297,6 +297,18 @@ extern "C" WE_API const char* WE_GetProperty(WE_Engine* engine, const char* name
  * Window Control
  *============================================================================*/
 
+extern "C" WE_API void WE_SetWindowHandle(WE_Engine* engine, void* hwnd) {
+	if (!engine) return;
+	auto* e = reinterpret_cast<Engine*>(engine);
+	e->SetWindowHandle(hwnd);
+}
+
+extern "C" WE_API void* WE_GetWindowHandle(WE_Engine* engine) {
+	if (!engine) return nullptr;
+	auto* e = reinterpret_cast<Engine*>(engine);
+	return e->GetWindowHandle();
+}
+
 extern "C" WE_API void WE_ShowWindow(WE_Engine* engine) {
 	if (!engine) return;
 	auto* e = reinterpret_cast<Engine*>(engine);

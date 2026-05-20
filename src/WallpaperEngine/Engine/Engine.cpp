@@ -1,21 +1,17 @@
 #include "WallpaperEngine/Engine/Engine.h"
 
 #include "WallpaperEngine/Application/WallpaperApplication.h"
-#include "WallpaperEngine/Audio/Drivers/SDLAudioDriver.h"
 #include "WallpaperEngine/Audio/Drivers/Detectors/AudioPlayingDetector.h"
-#include "WallpaperEngine/Audio/Drivers/Recorders/PlaybackRecorder.h"
 #include "WallpaperEngine/Data/Model/Property.h"
 #include "WallpaperEngine/Data/Parsers/ProjectParser.h"
 #include "WallpaperEngine/FileSystem/Container.h"
 #include "WallpaperEngine/Logging/Log.h"
 #include "WallpaperEngine/Render/Drivers/GLFWOpenGLDriver.h"
-#include "WallpaperEngine/Render/Drivers/VideoFactories.h"
 #include "WallpaperEngine/Render/RenderContext.h"
-#include "WallpaperEngine/Render/Wallpapers/CScene.h"
-#include "WallpaperEngine/Render/Wallpapers/CVideo.h"
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <SDL2/SDL.h>
-#include <ctime>
 
 using namespace WallpaperEngine::Engine;
 using namespace WallpaperEngine::Assets;
@@ -35,7 +31,8 @@ extern float g_Daytime;
 Engine::Engine()
 	: m_isRunning(false)
 	, m_isPaused(false)
-	, m_maxFPS(30) {
+	, m_maxFPS(30)
+	, m_windowHandle(nullptr) {
 	// Initialize SDL for the engine
 	SDL_SetMainReady();
 }
@@ -46,7 +43,7 @@ Engine::~Engine() {
 
 	// Cleanup application
 	if (m_app) {
-		m_app->cleanup();
+		WallpaperEngine::Application::WallpaperApplication::cleanup();
 		m_app.reset();
 	}
 
@@ -190,8 +187,11 @@ bool Engine::LoadWallpaper(const std::filesystem::path& path) {
 		auto json = WallpaperEngine::Data::JSON::JSON::parse(assetLocator->readString("project.json"));
 		m_project = WallpaperEngine::Data::Parsers::ProjectParser::parse(json, std::move(assetLocator));
 
-		// Store the project for property access
-		// The WallpaperApplication will use the context settings to load the wallpaper
+		// Initialize the application (creates WallpaperApplication, sets up output/audio/render)
+		if (!InitializeApplication()) {
+			m_project.reset();
+			return false;
+		}
 
 		ClearError();
 		return true;
@@ -384,16 +384,43 @@ std::optional<std::string> Engine::GetProperty(const std::string& name) {
  * Window Control
  *============================================================================*/
 
+void Engine::SetWindowHandle(void* hwnd) {
+	std::unique_lock<std::mutex> lock(m_mutex);
+	m_windowHandle = hwnd;
+
+	// If the application is already initialized, propagate the window handle to the driver
+	if (m_app && m_app->m_videoDriver) {
+		auto* glfwDriver = dynamic_cast<WallpaperEngine::Render::Drivers::GLFWOpenGLDriver*>(
+			m_app->m_videoDriver.get()
+		);
+		if (glfwDriver) {
+			glfwDriver->setParentWindow(hwnd);
+		}
+	}
+}
+
+void* Engine::GetWindowHandle() const {
+	return m_windowHandle;
+}
+
 void Engine::ShowWindow() {
 	// Implementation through VideoDriver
 	// This requires access to the underlying driver
+	if (m_app && m_app->m_videoDriver) {
+		m_app->m_videoDriver->showWindow();
+	}
 }
 
 void Engine::HideWindow() {
-	// Implementation through VideoDriver
+	if (m_app && m_app->m_videoDriver) {
+		m_app->m_videoDriver->hideWindow();
+	}
 }
 
 void Engine::ResizeWindow(int x, int y, int width, int height) {
+	m_windowGeometry = glm::ivec4(x, y, width, height);
+	m_hasWindowGeometry = true;
+
 	if (m_context) {
 		m_context->settings.render.mode = ApplicationContext::EXPLICIT_WINDOW;
 		m_context->settings.render.window.geometry = glm::ivec4(x, y, width, height);
@@ -479,8 +506,18 @@ bool Engine::InitializeContext() {
 
 	m_context = std::make_unique<ApplicationContext>(argc, const_cast<char**>(minimal_argv));
 
-	// Set default settings for DLL usage
-	m_context->settings.render.mode = ApplicationContext::NORMAL_WINDOW;
+	// Apply user configuration that was set before InitializeContext was called
+	// (e.g., SetWindowHandle + ResizeWindow)
+	if (m_windowHandle) {
+		m_context->settings.render.mode = ApplicationContext::EXPLICIT_WINDOW;
+		if (m_hasWindowGeometry) {
+			m_context->settings.render.window.geometry = m_windowGeometry;
+		} else {
+			m_context->settings.render.window.geometry = glm::ivec4(0, 0, 800, 600);
+		}
+	} else {
+		m_context->settings.render.mode = ApplicationContext::NORMAL_WINDOW;
+	}
 	m_context->settings.render.maximumFPS = m_maxFPS;
 	m_context->settings.audio.enabled = true;
 	m_context->settings.audio.volume = 15;
@@ -512,6 +549,16 @@ bool Engine::InitializeApplication() {
 		// Setup output (video driver, fullscreen detector)
 		m_app->setupOutput();
 
+		// Propagate external window handle to the driver if set
+		if (m_windowHandle && m_app->m_videoDriver) {
+			auto* glfwDriver = dynamic_cast<WallpaperEngine::Render::Drivers::GLFWOpenGLDriver*>(
+				m_app->m_videoDriver.get()
+			);
+			if (glfwDriver) {
+				glfwDriver->setParentWindow(m_windowHandle);
+			}
+		}
+
 		// Setup audio
 		m_app->setupAudio();
 
@@ -535,12 +582,19 @@ bool Engine::SetupViewport() {
 }
 
 void Engine::RenderLoop() {
-	// Initialize time
-	g_Time = 0.0f;
-	g_TimeLast = 0.0f;
+	// Move GLFW OpenGL context to this render thread.
+	// The context was made current on the main thread during setupOutput(),
+	// but GLFW requires it to be current on the thread that calls glfwSwapBuffers/glfwPollEvents.
+	glfwMakeContextCurrent(nullptr);
 
-	// Simple timing for render loop
-	static auto startTime = std::chrono::steady_clock::now();
+	// The app's m_videoDriver is accessible through friendship
+	// We need to cast to GLFWOpenGLDriver to get the window
+	auto* glfwDriver = dynamic_cast<WallpaperEngine::Render::Drivers::GLFWOpenGLDriver*>(
+		m_app->m_videoDriver.get()
+	);
+	if (glfwDriver) {
+		glfwMakeContextCurrent(glfwDriver->getWindow());
+	}
 
 	while (m_isRunning) {
 		if (m_isPaused) {
@@ -549,35 +603,15 @@ void Engine::RenderLoop() {
 		}
 
 		try {
-			// Update time
-			g_TimeLast = g_Time;
-
-			// Calculate time using simple timing
-			auto now = std::chrono::steady_clock::now();
-			g_Time = std::chrono::duration<float>(now - startTime).count();
-
-			// Update day time
-			time_t seconds;
-			struct tm* timeinfo;
-			time(&seconds);
-			timeinfo = localtime(&seconds);
-			g_Daytime = static_cast<float>((timeinfo->tm_hour * 60) + timeinfo->tm_min) / (24.0f * 60.0f);
-
-			// Render frame (this handles audio updates internally)
 			m_app->render();
-
-			// FPS limiting
-			if (m_maxFPS > 0) {
-				const float minFrameTime = 1.0f / m_maxFPS;
-				// Simple sleep-based FPS limiting
-				std::this_thread::sleep_for(std::chrono::duration<float>(minFrameTime * 0.9f));
-			}
-
 		} catch (const std::exception& e) {
 			SetLastError("Render loop error: " + std::string(e.what()));
 			m_isRunning = false;
 		}
 	}
+
+	// Release the OpenGL context from this thread before exiting
+	glfwMakeContextCurrent(nullptr);
 }
 
 PropertyType Engine::ConvertPropertyType(const Property* prop) {

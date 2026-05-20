@@ -5,19 +5,95 @@
  * This application demonstrates:
  * - DLL initialization and cleanup
  * - Loading a wallpaper from path
+ * - Window handle injection for embedding
  * - Listing wallpaper properties
  * - Modifying properties at runtime
  * - Playback control (Play/Pause/Stop)
  * - Clean shutdown
  */
 
-#include <engine.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+#include "../include/engine.h"
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <string>
 #include <thread>
 #include <chrono>
+
+// Global variables for window handling
+static HWND g_hWnd = nullptr;
+static WE_Engine* g_engine = nullptr;
+static bool g_shouldQuit = false;
+
+// Win32 Window Procedure
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	switch (uMsg) {
+		case WM_DESTROY:
+			g_shouldQuit = true;
+			PostQuitMessage(0);
+			return 0;
+
+		case WM_SIZE:
+			// Notify the engine of window resize
+			if (g_engine) {
+				int width = LOWORD(lParam);
+				int height = HIWORD(lParam);
+				WE_ResizeWindow(g_engine, 0, 0, width, height);
+			}
+			return 0;
+
+		case WM_KEYDOWN:
+			// Handle keyboard input
+			if (wParam == VK_ESCAPE) {
+				g_shouldQuit = true;
+				DestroyWindow(hWnd);
+			}
+			return 0;
+	}
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+// Create a simple Win32 window for embedding
+HWND CreateDemoWindow(int width, int height) {
+	// Register window class
+	WNDCLASS wc = {};
+	wc.lpfnWndProc = WindowProc;
+	wc.hInstance = GetModuleHandle(nullptr);
+	wc.lpszClassName = L"WallpaperEngineDemo";
+	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+
+	RegisterClass(&wc);
+
+	// Create window
+	DWORD style = WS_OVERLAPPEDWINDOW;
+	RECT rect = {0, 0, width, height};
+	AdjustWindowRect(&rect, style, FALSE);
+
+	HWND hWnd = CreateWindowEx(
+		0,
+		L"WallpaperEngineDemo",
+		L"Wallpaper Engine DLL Demo",
+		style,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		rect.right - rect.left,
+		rect.bottom - rect.top,
+		nullptr,
+		nullptr,
+		GetModuleHandle(nullptr),
+		nullptr
+	);
+
+	if (hWnd) {
+		ShowWindow(hWnd, SW_SHOW);
+		UpdateWindow(hWnd);
+	}
+
+	return hWnd;
+}
 
 // Helper function to print property type as string
 const char* PropertyTypeToString(WE_PropertyType type) {
@@ -228,6 +304,8 @@ int main(int argc, char* argv[]) {
 		std::cout << "  --window       - Enable window control demo" << std::endl;
 		std::cout << "  --audio        - Enable audio control demo" << std::endl;
 		std::cout << "  --screenshot   - Take a screenshot" << std::endl;
+		std::cout << "  --no-window    - Disable window embedding (headless mode)" << std::endl;
+		std::cout << "  --size <w> <h> - Set window size (default: 1280x720)" << std::endl;
 		std::cout << "  --fps <n>      - Set maximum FPS" << std::endl;
 		std::cout << "\nExample:" << std::endl;
 		std::cout << "  " << argv[0] << " C:/Assets/WallpaperEngine C:/Wallpapers/1845706469 --fps 30" << std::endl;
@@ -243,7 +321,10 @@ int main(int argc, char* argv[]) {
 	bool windowDemo = false;
 	bool audioDemo = false;
 	bool screenshotDemo = false;
+	bool noWindow = false;  // Option to disable window embedding
 	int maxFPS = 30;
+	int windowWidth = 1280;
+	int windowHeight = 720;
 	std::vector<std::pair<std::string, std::string>> propertiesToSet;
 
 	for (int i = 3; i < argc; ++i) {
@@ -258,6 +339,11 @@ int main(int argc, char* argv[]) {
 			audioDemo = true;
 		} else if (arg == "--screenshot") {
 			screenshotDemo = true;
+		} else if (arg == "--no-window") {
+			noWindow = true;
+		} else if (arg == "--size" && i + 2 < argc) {
+			windowWidth = std::atoi(argv[++i]);
+			windowHeight = std::atoi(argv[++i]);
 		} else if (arg == "--fps" && i + 1 < argc) {
 			maxFPS = std::atoi(argv[++i]);
 		} else if (arg == "--set" && i + 1 < argc) {
@@ -279,6 +365,7 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Failed to create engine!" << std::endl;
 		return 1;
 	}
+	g_engine = engine;  // Store for global access in window proc
 	std::cout << "Engine created successfully!" << std::endl;
 
 	//==========================================================================
@@ -344,6 +431,28 @@ int main(int argc, char* argv[]) {
 	}
 
 	//==========================================================================
+	// Window Handle Injection
+	//==========================================================================
+
+	if (!noWindow) {
+		std::cout << "\n=== Creating Window for Embedding ===" << std::endl;
+		g_hWnd = CreateDemoWindow(windowWidth, windowHeight);
+		if (!g_hWnd) {
+			std::cerr << "Failed to create window!" << std::endl;
+			WE_Destroy(engine);
+			return 1;
+		}
+		std::cout << "Window created successfully! (HWND: " << (void*)g_hWnd << ")" << std::endl;
+
+		// Set the window handle for embedding
+		std::cout << "Injecting window handle to engine..." << std::endl;
+		WE_SetWindowHandle(engine, g_hWnd);
+		std::cout << "Window handle injected!" << std::endl;
+	} else {
+		std::cout << "\n=== Running in Headless Mode (no window) ===" << std::endl;
+	}
+
+	//==========================================================================
 	// Start Playback
 	//==========================================================================
 
@@ -376,11 +485,27 @@ int main(int argc, char* argv[]) {
 	//==========================================================================
 
 	std::cout << "\n=== Running ===" << std::endl;
-	std::cout << "Press Ctrl+C to stop..." << std::endl;
+	if (g_hWnd) {
+		std::cout << "Press ESC or close the window to stop..." << std::endl;
 
-	// Keep running until interrupted
-	while (WE_IsPlaying(engine)) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		// Message loop for windowed mode
+		MSG msg;
+		while (!g_shouldQuit && WE_IsPlaying(engine)) {
+			// Process all pending messages
+			while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+			// Small sleep to avoid busy-waiting
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		}
+	} else {
+		std::cout << "Press Ctrl+C to stop..." << std::endl;
+
+		// Simple loop for headless mode
+		while (WE_IsPlaying(engine)) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
 	}
 
 	//==========================================================================
@@ -392,7 +517,14 @@ int main(int argc, char* argv[]) {
 	std::cout << "Stopped!" << std::endl;
 
 	WE_Destroy(engine);
+	g_engine = nullptr;
 	std::cout << "Engine destroyed!" << std::endl;
+
+	// Destroy window if created
+	if (g_hWnd) {
+		DestroyWindow(g_hWnd);
+		g_hWnd = nullptr;
+	}
 
 	std::cout << "\n=== Demo Complete ===" << std::endl;
 	return 0;
