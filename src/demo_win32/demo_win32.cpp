@@ -59,21 +59,21 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 // Create a simple Win32 window for embedding
 HWND CreateDemoWindow(int width, int height) {
 	// Register window class
-	WNDCLASS wc = {};
+	WNDCLASSW wc = {};
 	wc.lpfnWndProc = WindowProc;
 	wc.hInstance = GetModuleHandle(nullptr);
 	wc.lpszClassName = L"WallpaperEngineDemo";
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wc.hCursor = LoadCursorW(nullptr, (LPCWSTR)IDC_ARROW);
 
-	RegisterClass(&wc);
+	RegisterClassW(&wc);
 
 	// Create window
 	DWORD style = WS_OVERLAPPEDWINDOW;
 	RECT rect = {0, 0, width, height};
 	AdjustWindowRect(&rect, style, FALSE);
 
-	HWND hWnd = CreateWindowEx(
+	HWND hWnd = CreateWindowExW(
 		0,
 		L"WallpaperEngineDemo",
 		L"Wallpaper Engine DLL Demo",

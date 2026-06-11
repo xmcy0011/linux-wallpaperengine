@@ -17,3 +17,4 @@ CompileFlags:
     - "-Isrc/External/quickjs"
     - "-Isrc/External/SPIRV-Cross-WallpaperEngine"
     - "-Isrc/External/stb"
+    - "-Isrc/examples/demo_mfc"
