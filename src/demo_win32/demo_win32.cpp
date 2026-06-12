@@ -15,7 +15,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#include "../include/engine.h"
+#include "wpengine/engine.h"
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -52,6 +52,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				DestroyWindow(hWnd);
 			}
 			return 0;
+		default:
+			break;
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
@@ -342,10 +344,10 @@ int main(int argc, char* argv[]) {
 		} else if (arg == "--no-window") {
 			noWindow = true;
 		} else if (arg == "--size" && i + 2 < argc) {
-			windowWidth = std::atoi(argv[++i]);
-			windowHeight = std::atoi(argv[++i]);
+			windowWidth = std::strtol(argv[++i], nullptr, 10);
+			windowHeight = std::strtol(argv[++i], nullptr, 10);
 		} else if (arg == "--fps" && i + 1 < argc) {
-			maxFPS = std::atoi(argv[++i]);
+			maxFPS = std::strtol(argv[++i], nullptr, 10);
 		} else if (arg == "--set" && i + 1 < argc) {
 			std::string prop = argv[++i];
 			const size_t eqPos = prop.find('=');

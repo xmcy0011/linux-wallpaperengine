@@ -85,7 +85,8 @@ SceneUniquePtr WallpaperParser::parseScene (const JSON& file, Project& project) 
     // update scriptEngine CanvasSize, before parseObjects()
     // so that objects can use it in their scriptproperties if needed
     WallpaperEngine::Scripting::ScriptEngine::instance ().setCanvasSize (
-        sceneData->camera.projection.width, sceneData->camera.projection.height
+        static_cast<float> (sceneData->camera.projection.width),
+        static_cast<float> (sceneData->camera.projection.height)
     );
 
     sceneData->objects = parseObjects (objects, project);

@@ -10,7 +10,7 @@ project(DemoWin32UI)
 # Source files
 set(DEMO_SOURCES
     demo_win32.cpp
-    DemoWin32UI.cpp
+    demo_win32_ui.cpp
 )
 
 # Create executable (WIN32 to avoid console window)

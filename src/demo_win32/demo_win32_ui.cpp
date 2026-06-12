@@ -18,10 +18,9 @@
 #include <shlobj.h>
 #include <commdlg.h>
 
-#include "../include/engine.h"
+#include "wpengine/engine.h"
 
 #include <string>
-#include <vector>
 #include <map>
 
 #pragma comment(lib, "comctl32.lib")
@@ -280,14 +279,11 @@ HWND CreateWallpaperWindow(HWND hParent) {
  *============================================================================*/
 
 LRESULT CALLBACK WallpaperWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    switch (uMsg) {
-        case WM_SIZE:
-            if (g_engine) {
-                int width = LOWORD(lParam);
-                int height = HIWORD(lParam);
-                WE_ResizeWindow(g_engine, 0, 0, width, height);
-            }
-            return 0;
+    if (uMsg == WM_SIZE && g_engine) {
+        int width = LOWORD(lParam);
+        int height = HIWORD(lParam);
+        WE_ResizeWindow(g_engine, 0, 0, width, height);
+        return 0;
     }
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
@@ -347,39 +343,37 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             int wmId = LOWORD(wParam);
             switch (wmId) {
                 case ID_LOAD_WALLPAPER_BTN: {
-                    OPENFILENAMEW ofn = {0};
-                    wchar_t szFile[MAX_PATH] = L"";
+                    BROWSEINFOW bi = {0};
+                    bi.hwndOwner = hWnd;
+                    bi.pszDisplayName = nullptr;
+                    bi.lpszTitle = L"Select Wallpaper Folder";
+                    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
 
-                    ofn.lStructSize = sizeof(ofn);
-                    ofn.hwndOwner = hWnd;
-                    ofn.lpstrFile = szFile;
-                    ofn.nMaxFile = MAX_PATH;
-                    ofn.lpstrFilter = L"All Files\0*.*\0\0";
-                    ofn.nFilterIndex = 1;
-                    ofn.lpstrFileTitle = nullptr;
-                    ofn.nMaxFileTitle = 0;
-                    ofn.lpstrInitialDir = nullptr;
-                    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                    LPITEMIDLIST pidl = SHBrowseForFolderW(&bi);
+                    if (pidl) {
+                        wchar_t path[MAX_PATH];
+                        if (SHGetPathFromIDListW(pidl, path)) {
+                            std::string folderPath = WStringToUTF8(std::wstring(path));
 
-                    if (GetOpenFileNameW(&ofn)) {
-                        std::string path = WStringToUTF8(std::wstring(szFile));
+                            if (g_assetsPath.empty()) {
+                                MessageBoxA(hWnd, "Please set assets path first!\n\nClick 'Set Assets Path' button.", "Info", MB_OK | MB_ICONINFORMATION);
+                                CoTaskMemFree(pidl);
+                                break;
+                            }
 
-                        if (g_assetsPath.empty()) {
-                            MessageBoxA(hWnd, "Please set assets path first!\n\nClick 'Set Assets Path' button.", "Info", MB_OK | MB_ICONINFORMATION);
-                            break;
+                            WE_Stop(g_engine);
+                            if (WE_LoadWallpaper(g_engine, folderPath.c_str())) {
+                                SetStatusText(("Loaded: " + folderPath).c_str());
+                                RefreshProperties();
+                                WE_Play(g_engine);
+                                UpdatePlaybackButtons();
+                            } else {
+                                std::string error = "Failed to load: ";
+                                error += WE_GetLastError(g_engine);
+                                MessageBoxA(hWnd, error.c_str(), "Error", MB_OK | MB_ICONERROR);
+                            }
                         }
-
-                        WE_Stop(g_engine);
-                        if (WE_LoadWallpaper(g_engine, path.c_str())) {
-                            SetStatusText(("Loaded: " + path).c_str());
-                            RefreshProperties();
-                            WE_Play(g_engine);
-                            UpdatePlaybackButtons();
-                        } else {
-                            std::string error = "Failed to load: ";
-                            error += WE_GetLastError(g_engine);
-                            MessageBoxA(hWnd, error.c_str(), "Error", MB_OK | MB_ICONERROR);
-                        }
+                        CoTaskMemFree(pidl);
                     }
                     break;
                 }

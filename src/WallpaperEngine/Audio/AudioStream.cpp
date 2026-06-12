@@ -74,7 +74,7 @@ static int audio_read_data_callback (void* streamarg, uint8_t* buffer, int buffe
     }
 
     // return read bytes only
-    return stream->getBuffer ()->gcount ();
+    return static_cast<int> (stream->getBuffer ()->gcount ());
 }
 
 int64_t audio_seek_data_callback (void* streamarg, int64_t offset, int whence) {
@@ -460,9 +460,9 @@ int AudioStream::resampleAudio (uint8_t* out_buf, const int out_size) {
         return -1;
     }
 
-    int max_out_nb_samples = out_nb_samples = av_rescale_rnd (
+    int max_out_nb_samples = out_nb_samples = static_cast<int> (av_rescale_rnd (
         in_nb_samples, this->m_audioContext.getSampleRate (), this->getContext ()->sample_rate, AV_ROUND_UP
-    );
+    ));
 
     // check rescaling was successful
     if (max_out_nb_samples <= 0) {
@@ -501,10 +501,10 @@ int AudioStream::resampleAudio (uint8_t* out_buf, const int out_size) {
     }
 
     // retrieve output samples number taking into account the progressive delay
-    out_nb_samples = av_rescale_rnd (
+    out_nb_samples = static_cast<int> (av_rescale_rnd (
         swr_get_delay (this->m_swrctx, this->getContext ()->sample_rate) + in_nb_samples,
         this->m_audioContext.getSampleRate (), this->getContext ()->sample_rate, AV_ROUND_UP
-    );
+    ));
 
     // check output samples number was correctly retrieved
     if (out_nb_samples <= 0) {

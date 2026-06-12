@@ -1,5 +1,5 @@
 #include "WallpaperEngine/Engine/Engine.h"
-#include "engine.h"
+#include "wpengine/engine.h"
 
 #include <cstring>
 #include <map>

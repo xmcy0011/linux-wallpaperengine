@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MemoryStreamProtocol.h"
+#include "WallpaperEngine/VideoPlayback/MPV/MemoryStreamProtocol.h"
 #include "WallpaperEngine/Render/RenderContext.h"
 
 #include <GL/glew.h>

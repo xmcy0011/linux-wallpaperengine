@@ -3,11 +3,18 @@
         {
             "name": "Win32",
             "compilerPath": "cl.exe",
+            "defines": [
+                "STB_IMAGE_WRITE_IMPLEMENTATION",
+                "WALLPAPERENGINE_ENABLE_MPV=0",
+                "WALLPAPERENGINE_ENABLE_PULSEAUDIO=0",
+                "WALLPAPERENGINE_EXPORTS"
+            ],
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src/External/**",
                 "E:/repo/github/vcpkg/installed/x64-windows/include",
-                "E:/repo/github/vcpkg/installed/x64-windows/include/SDL2"
+                "E:/repo/github/vcpkg/installed/x64-windows/include/SDL2",
+                "E:/repo/github/mpv-dev/include"
             ],
             "cStandard": "c17",
             "cppStandard": "c++20",

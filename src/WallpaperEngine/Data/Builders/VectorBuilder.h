@@ -135,19 +135,19 @@ template <> inline unsigned int VectorBuilder::convert<unsigned int> (const char
 
 template <> inline double VectorBuilder::convert<double> (const char* str) { return std::strtod (str, nullptr); }
 
-template <> inline uint8_t VectorBuilder::convert<uint8_t> (const char* str) { return std::strtoul (str, nullptr, 10); }
+template <> inline uint8_t VectorBuilder::convert<uint8_t> (const char* str) { return static_cast<uint8_t> (std::strtoul (str, nullptr, 10)); }
 
 template <> inline uint16_t VectorBuilder::convert<uint16_t> (const char* str) {
-    return std::strtoul (str, nullptr, 10);
+    return static_cast<uint16_t> (std::strtoul (str, nullptr, 10));
 }
 
 template <> inline uint64_t VectorBuilder::convert<uint64_t> (const char* str) {
     return std::strtoull (str, nullptr, 10);
 }
 
-template <> inline int8_t VectorBuilder::convert<int8_t> (const char* str) { return std::strtol (str, nullptr, 10); }
+template <> inline int8_t VectorBuilder::convert<int8_t> (const char* str) { return static_cast<int8_t> (std::strtol (str, nullptr, 10)); }
 
-template <> inline int16_t VectorBuilder::convert<int16_t> (const char* str) { return std::strtol (str, nullptr, 10); }
+template <> inline int16_t VectorBuilder::convert<int16_t> (const char* str) { return static_cast<int16_t> (std::strtol (str, nullptr, 10)); }
 
 template <> inline int64_t VectorBuilder::convert<int64_t> (const char* str) { return std::strtoll (str, nullptr, 10); }
 
